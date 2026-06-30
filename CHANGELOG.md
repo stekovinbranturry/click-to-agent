@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.1
+
+### Patch Changes
+
+- 2fb057d: first publish
+
 ## click-to-agent
 
 ### 0.1.0 (2026-06-30)

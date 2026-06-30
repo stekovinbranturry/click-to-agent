@@ -1,6 +1,6 @@
 {
   "name": "click-to-agent",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Alt/Option+Click any React component to open its source — or send it to your AI coding agent (Cursor / Claude Code) with full context. Zero-config for Next.js + Turbopack + React 19.",
   "keywords": [
     "react",
