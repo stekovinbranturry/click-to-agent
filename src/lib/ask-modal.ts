@@ -18,6 +18,7 @@ export function createAskModal(): AskModalElements {
 export function showAskModal(
   elements: AskModalElements,
   componentName: string,
+  agentLabel: string,
   onSubmit: (instruction: string) => void,
 ): void {
   const { overlay } = elements;
@@ -37,12 +38,12 @@ export function showAskModal(
   // Header
   const header = document.createElement('div');
   header.style.cssText = 'font-size: 14px; font-weight: 600; color: #a78bfa;';
-  header.textContent = `Claude에게 묻기 — <${componentName}>`;
+  header.textContent = `Ask ${agentLabel} — <${componentName}>`;
   card.appendChild(header);
 
   // Textarea
   const textarea = document.createElement('textarea');
-  textarea.placeholder = '이 컴포넌트를 어떻게 수정할까요?';
+  textarea.placeholder = 'How should this component change? (optional)';
   textarea.rows = 4;
   textarea.style.cssText = `
     width: 100%; box-sizing: border-box;
@@ -63,13 +64,13 @@ export function showAskModal(
   // Hint
   const hint = document.createElement('div');
   hint.style.cssText = 'font-size: 11px; color: #64748b;';
-  hint.textContent = 'Ctrl+Enter로 전송 · Escape로 닫기';
+  hint.textContent = 'Ctrl/⌘+Enter to send · Escape to close';
   card.appendChild(hint);
 
   // Loading message (hidden initially)
   const loadingMsg = document.createElement('div');
   loadingMsg.style.cssText = 'font-size: 12px; color: #a78bfa; display: none;';
-  loadingMsg.textContent = '컨텍스트 수집 중...';
+  loadingMsg.textContent = 'Collecting context…';
   card.appendChild(loadingMsg);
 
   // Buttons row
@@ -77,7 +78,7 @@ export function showAskModal(
   btnRow.style.cssText = 'display: flex; gap: 8px; justify-content: flex-end;';
 
   const cancelBtn = document.createElement('button');
-  cancelBtn.textContent = '취소';
+  cancelBtn.textContent = 'Cancel';
   cancelBtn.style.cssText = `
     padding: 6px 16px; border-radius: 6px; font-size: 13px;
     cursor: pointer; border: 1px solid rgba(255,255,255,0.2);
@@ -91,7 +92,7 @@ export function showAskModal(
   });
 
   const submitBtn = document.createElement('button');
-  submitBtn.textContent = 'Claude에게 보내기';
+  submitBtn.textContent = `Send to ${agentLabel}`;
   submitBtn.style.cssText = `
     padding: 6px 16px; border-radius: 6px; font-size: 13px;
     cursor: pointer; border: 1px solid rgba(139,92,246,0.6);

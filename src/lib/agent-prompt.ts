@@ -1,4 +1,4 @@
-import type { AskContext, FiberInspection, ResolvedSource } from '../types';
+import type { AgentTarget, AskContext, FiberInspection, ResolvedSource } from '../types';
 import { inspectFiber } from './fiber-inspect';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -16,6 +16,9 @@ const CSS_PROPS = [
   'overflow', 'overflowX', 'overflowY', 'transform', 'opacity',
   'cursor', 'pointerEvents',
 ] as const;
+
+/** Max encoded length for deeplink-based agents (Cursor / Claude Code) */
+const URL_PROMPT_LIMIT = 28000;
 
 /** Truncate outerHTML to a safe length for inclusion in a URI prompt */
 export function truncateHtml(html: string, maxLen = 8000): string {
@@ -92,8 +95,8 @@ function serializeInspection(inspection: FiberInspection): {
   return { propsJson, stateJson };
 }
 
-/** Build the structured markdown prompt for Claude Code */
-export function buildClaudePrompt(params: PromptParams): string {
+/** Build the structured markdown prompt sent to the coding agent */
+export function buildAgentPrompt(params: PromptParams): string {
   const {
     userInstruction,
     componentName,
@@ -108,10 +111,10 @@ export function buildClaudePrompt(params: PromptParams): string {
 
   const sections: string[] = [];
 
-  sections.push('# UI 컴포넌트 수정 요청');
-  sections.push(`## 사용자 지시사항\n${userInstruction || '(지시사항 없음)'}`);
+  sections.push('# UI component change request');
+  sections.push(`## Instruction\n${userInstruction || '(no instruction provided)'}`);
   sections.push(
-    `## 컴포넌트 정보\n- 컴포넌트: <${componentName}>\n- 파일: ${filePath}\n- 라인: ${line}`,
+    `## Component\n- Component: <${componentName}>\n- File: ${filePath}\n- Line: ${line}`,
   );
 
   if (propsJson) {
@@ -123,14 +126,23 @@ export function buildClaudePrompt(params: PromptParams): string {
   }
 
   if (outerHtml) {
-    sections.push(`## DOM HTML 구조 (렌더링된 출력)\n\`\`\`html\n${outerHtml}\n\`\`\``);
+    sections.push(`## DOM HTML (rendered output)\n\`\`\`html\n${outerHtml}\n\`\`\``);
   }
 
   if (computedCss) {
-    sections.push(`## 적용된 CSS (주요 스타일)\n\`\`\`css\n${computedCss}\n\`\`\``);
+    sections.push(`## Computed CSS (key styles)\n\`\`\`css\n${computedCss}\n\`\`\``);
   }
 
   return sections.join('\n\n');
+}
+
+/** Open Cursor with a pre-filled agent prompt via the Cursor deeplink */
+export function openCursorWithPrompt(prompt: string): void {
+  const encoded = encodeURIComponent(prompt);
+  window.open(
+    `cursor://anysphere.cursor-deeplink/prompt?text=${encoded}`,
+    '_self',
+  );
 }
 
 /** Open Claude Code with a pre-filled prompt */
@@ -139,21 +151,42 @@ export function openClaudeWithPrompt(prompt: string): void {
   window.open(`vscode://anthropic.claude-code/open?prompt=${encoded}`, '_self');
 }
 
-/** Main orchestration: collect context, build prompt, open Claude Code */
-export async function runAskClaude(params: {
-  instruction: string;
-  context: AskContext;
-  resolved: ResolvedSource | null;
-}): Promise<void> {
-  const { instruction, context, resolved } = params;
+/** Copy text to the clipboard, with a legacy fallback. Returns success. */
+export async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // fall through to legacy path
+  }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-9999px;opacity:0;';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+}
 
+/** Collect context and build the markdown prompt for a component. */
+function buildPromptFromContext(
+  instruction: string,
+  context: AskContext,
+  resolved: ResolvedSource | null,
+  enforceUrlLimit: boolean,
+): string {
   const filePath = resolved?.filePath ?? context.filePath ?? '(unknown)';
   const line = resolved?.originalLine ?? context.line ?? 0;
 
-  // Collect fiber inspection
   const inspection: FiberInspection = inspectFiber(context.fiber);
 
-  // HTML structure
   let outerHtml = '';
   try {
     outerHtml = truncateHtml(context.element.outerHTML);
@@ -161,7 +194,6 @@ export async function runAskClaude(params: {
     // element detached — skip
   }
 
-  // Computed CSS
   let computedCss = '';
   try {
     computedCss = collectComputedCss(context.element);
@@ -169,8 +201,7 @@ export async function runAskClaude(params: {
     // skip
   }
 
-  // Build prompt with URL length safety
-  let prompt = buildClaudePrompt({
+  let prompt = buildAgentPrompt({
     userInstruction: instruction,
     componentName: context.componentName,
     filePath,
@@ -178,13 +209,19 @@ export async function runAskClaude(params: {
     inspection,
     outerHtml,
     computedCss,
-
   });
 
-  // If URL would be too long, reduce HTML then drop it entirely
-  if (encodeURIComponent(prompt).length > 28000) {
-    const smallerHtml = truncateHtml(context.element.outerHTML, 4000);
-    prompt = buildClaudePrompt({
+  if (!enforceUrlLimit) return prompt;
+
+  // Deeplink targets have a practical URL length cap — shrink, then drop HTML.
+  if (encodeURIComponent(prompt).length > URL_PROMPT_LIMIT) {
+    let smallerHtml = '';
+    try {
+      smallerHtml = truncateHtml(context.element.outerHTML, 4000);
+    } catch {
+      // skip
+    }
+    prompt = buildAgentPrompt({
       userInstruction: instruction,
       componentName: context.componentName,
       filePath,
@@ -192,12 +229,11 @@ export async function runAskClaude(params: {
       inspection,
       outerHtml: smallerHtml,
       computedCss,
-  
     });
   }
 
-  if (encodeURIComponent(prompt).length > 28000) {
-    prompt = buildClaudePrompt({
+  if (encodeURIComponent(prompt).length > URL_PROMPT_LIMIT) {
+    prompt = buildAgentPrompt({
       userInstruction: instruction,
       componentName: context.componentName,
       filePath,
@@ -205,9 +241,41 @@ export async function runAskClaude(params: {
       inspection,
       outerHtml: '',
       computedCss,
-  
     });
   }
 
+  return prompt;
+}
+
+/**
+ * Main orchestration: collect context, build a prompt, and dispatch it to the
+ * chosen agent target.
+ *
+ * - `cursor` / `claude` open the editor via deeplink (URL length enforced)
+ * - `copy` writes the full prompt to the clipboard
+ *
+ * Returns the prompt string (useful for the `copy` target).
+ */
+export async function runAskAgent(params: {
+  target: AgentTarget;
+  instruction: string;
+  context: AskContext;
+  resolved: ResolvedSource | null;
+}): Promise<{ prompt: string; copied?: boolean }> {
+  const { target, instruction, context, resolved } = params;
+  const enforceUrlLimit = target !== 'copy';
+  const prompt = buildPromptFromContext(instruction, context, resolved, enforceUrlLimit);
+
+  if (target === 'copy') {
+    const copied = await copyToClipboard(prompt);
+    return { prompt, copied };
+  }
+
+  if (target === 'cursor') {
+    openCursorWithPrompt(prompt);
+    return { prompt };
+  }
+
   openClaudeWithPrompt(prompt);
+  return { prompt };
 }

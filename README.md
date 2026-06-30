@@ -1,52 +1,62 @@
-# nextjs-locator
+# click-to-agent
 
-**Alt+Click any React component to open its source in your editor.**
+**Alt/Option + Click any React component to open its source — or hand it to your AI coding agent with full context.**
 
-Zero-config for Next.js 15/16 with Turbopack. No Babel plugin, no browser extension, no setup.
+Zero-config for Next.js 15/16 with Turbopack and React 19. No Babel plugin, no browser extension, no setup.
 
 <!-- TODO: Add demo GIF here -->
-https://github.com/user-attachments/assets/4aa73a8c-ff03-4017-8950-14b70417cea2
+<!-- ![click-to-agent demo](docs/demo.gif) -->
 
-## Features
+> Fork of the excellent [`nextjs-locator`](https://github.com/stkang9409/nextjs-locator) by stkang9409 (MIT). `click-to-agent` keeps the source-locator core and adds first-class **"send this component to an AI coding agent"** actions (Cursor / Claude Code / clipboard).
 
-- **Zero config** — Drop a single component into your layout, done
-- **React 18 + 19** — Uses `_debugStack` (React 19) with `_debugSource` fallback (React 18)
-- **Turbopack native** — Decodes Turbopack's sectioned source map format
-- **Webpack compatible** — Also works with Next.js webpack builds
-- **File path tooltip** — Shows resolved source file path and line on hover
-- **Props/State preview** — Hover shows component props, hook state, and render count
-- **Component hierarchy** — Right-click to see the full React component ancestry with overlay highlight
-- **Claude Code integration** — "Ask Claude" action sends component context (props, state, DOM, CSS) to Claude Code
-- **Source map prefetch** — Prefetches source maps on modifier key press for instant resolution
-- **Compile-time fast path** — Optional `nextjs-locator-swc` companion for instant resolution via build-time attributes
-- **Multi-editor** — VS Code, Cursor, WebStorm, Zed, VS Code Insiders
-- **Zero dependencies** — Only requires `react` as a peer dependency
-- **Production safe** — Tree-shaken completely from production builds
-- **Configurable** — Modifier key, highlight color, editor choice, preview toggle via props
+## What you get
 
-## How It Works
+Hold the modifier key (Alt on Windows/Linux, Option on Mac) and interact with any component:
 
-1. Listens for **modifier key + mousemove** to find the DOM element under cursor
-2. Traverses the **React Fiber tree** via `__reactFiber$` internal key
-3. Source resolution priority:
-   - **`data-locator-source`** attribute (instant, if `nextjs-locator-swc` is used)
-   - **`_debugSource`** (React 18, synchronous)
-   - **`_debugStack`** + source map (React 19, async with prefetch)
-4. **Prefetches `.map` source maps** when modifier key is pressed (Turbopack sections format)
-5. **Decodes VLQ mappings** to resolve the original file path, line, and column
-6. Displays **file path in tooltip** and **props/state preview panel**
-7. **Alt+Click** opens action picker: **go to source** or **ask Claude**
-8. **Alt+Right-click** shows component hierarchy with hover overlay highlighting
-9. "Ask Claude" collects component context and opens **Claude Code** via `vscode://` protocol
+- **Alt + Hover** — highlight the component, show its name and resolved source path
+- **Alt + Click** — open the action picker for that component
+- **Alt + Right-click** — show the full component ancestry, then pick a component to act on
+
+Every component exposes **four actions**:
+
+| Action | What it does |
+|--------|--------------|
+| ↗ **Go to source** | Opens the source file at the exact line in your editor |
+| ▹ **Ask Cursor** | Opens **Cursor** with a rich, pre-filled prompt about the component |
+| ◎ **Ask Claude** | Opens **Claude Code** with a rich, pre-filled prompt about the component |
+| ⧉ **Copy prompt** | Copies the full component prompt to your clipboard |
+
+<!-- TODO: screenshot of the four-action picker -->
+<!-- ![action picker](docs/action-picker.png) -->
+
+For **Ask Cursor** / **Ask Claude**, a small modal asks for your instruction (e.g. *"make this button full-width and blue"*). The prompt handed to the agent includes:
+
+- Component name, source file path, and line number
+- Current props (JSON)
+- Hook state — `useState` / `useReducer` / `useMemo` / `useRef` — or class component state (JSON)
+- The rendered DOM HTML
+- Key computed CSS (layout, spacing, color, typography, etc.)
+
+So the agent lands on the right file with everything it needs to make a targeted edit.
+
+## How it routes to each agent
+
+| Target | Mechanism |
+|--------|-----------|
+| Cursor | `cursor://anysphere.cursor-deeplink/prompt?text=…` deeplink |
+| Claude Code | `vscode://anthropic.claude-code/open?prompt=…` deeplink |
+| Copy | Clipboard API (with a legacy `execCommand` fallback) |
+
+Deeplink prompts are capped at ~28k encoded characters; if a component's context is larger, the DOM HTML is shrunk (and dropped if still too large) so the link stays valid. The **Copy prompt** action always copies the full, untruncated prompt.
 
 ## Installation
 
 ```bash
-npm install nextjs-locator
+npm install click-to-agent
 # or
-yarn add nextjs-locator
+yarn add click-to-agent
 # or
-pnpm add nextjs-locator
+pnpm add click-to-agent
 ```
 
 ## Quick Start
@@ -55,7 +65,7 @@ pnpm add nextjs-locator
 
 ```tsx
 // app/layout.tsx
-import { Locator } from 'nextjs-locator';
+import { Locator } from 'click-to-agent';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -73,7 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 ```tsx
 // pages/_app.tsx
-import { Locator } from 'nextjs-locator';
+import { Locator } from 'click-to-agent';
 import type { AppProps } from 'next/app';
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -86,16 +96,18 @@ export default function App({ Component, pageProps }: AppProps) {
 }
 ```
 
-## Keyboard Shortcuts
+`<Locator />` renders nothing and is only active in development — it is completely tree-shaken from production builds.
+
+## Keyboard & Mouse
 
 | Shortcut | Action |
 |----------|--------|
-| **Alt + Hover** | Highlight component with name and source file path |
-| **Alt + Click** | Open action picker (go to source / ask Claude) |
-| **Alt + Right-click** | Show component hierarchy menu with overlay highlight |
-| **Arrow Up/Down** | Navigate menu items |
-| **Enter** | Select action |
-| **Escape** | Dismiss menu |
+| **Alt + Hover** | Highlight component with name and source path |
+| **Alt + Click** | Open the four-action picker for that component |
+| **Alt + Right-click** | Show the component hierarchy, then pick a component |
+| **Arrow Up / Down** | Navigate menu items |
+| **Enter** | Select |
+| **Escape** | Dismiss |
 
 > On Mac, use **Option** instead of Alt.
 
@@ -103,14 +115,14 @@ export default function App({ Component, pageProps }: AppProps) {
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `editor` | `EditorProtocol` | `'vscode'` | Editor to open files in |
+| `editor` | `EditorProtocol` | `'vscode'` | Editor used by **Go to source** |
 | `modifier` | `'alt' \| 'ctrl' \| 'meta' \| 'shift'` | `'alt'` | Modifier key to activate |
-| `highlightColor` | `string` | `'#ef4444'` | CSS color for the overlay border |
-| `projectRoot` | `string` | — | Absolute project root path |
+| `highlightColor` | `string` | `'#ef4444'` | Overlay border color (CSS color) |
+| `projectRoot` | `string` | — | Absolute project root path (for path resolution) |
 | `enabled` | `boolean` | `true` in dev | Force enable/disable |
-| `showPreview` | `boolean` | `true` | Show props/state preview on hover |
+| `showPreview` | `boolean` | `true` | Show props/state preview panel on Alt+hover |
 
-### Editor Support
+### Editor support (Go to source)
 
 | Editor | `editor` value | Protocol |
 |--------|----------------|----------|
@@ -124,24 +136,24 @@ export default function App({ Component, pageProps }: AppProps) {
 <Locator editor="cursor" />
 ```
 
+> **Ask Cursor** and **Ask Claude** route through their own deeplinks and do not depend on the `editor` prop — that prop only controls which editor **Go to source** opens.
+
 ## Configuration
 
-### Project Root
+### Project root
 
-If source map paths don't resolve correctly (e.g., in monorepos or custom setups), set the project root:
+If source map paths don't resolve correctly (e.g. monorepos or custom setups), set the project root:
 
-**Option 1: Via prop**
 ```tsx
 <Locator projectRoot="/Users/you/projects/my-app" />
 ```
 
-**Option 2: Via environment variable**
 ```bash
 # .env.local
 NEXT_PUBLIC_PROJECT_ROOT=/Users/you/projects/my-app
 ```
 
-### Custom Modifier Key
+### Custom modifier key
 
 ```tsx
 <Locator modifier="ctrl" />    {/* Ctrl+Click */}
@@ -149,98 +161,56 @@ NEXT_PUBLIC_PROJECT_ROOT=/Users/you/projects/my-app
 <Locator modifier="shift" />   {/* Shift+Click */}
 ```
 
-### Custom Highlight Color
+### Custom highlight color
 
 ```tsx
 <Locator highlightColor="#3b82f6" />   {/* Blue */}
 <Locator highlightColor="#10b981" />   {/* Green */}
 ```
 
-## Claude Code Integration
+## How It Works
 
-**Alt+Click** any component to open the action picker, then select **"Claude에게 묻기"** (Ask Claude). A modal appears where you can type your instruction (e.g., "change this button to blue"). The prompt sent to Claude Code includes:
+1. Listens for **modifier key + mousemove** to find the DOM element under the cursor.
+2. Traverses the **React Fiber tree** via the `__reactFiber$` internal key.
+3. Resolves the original source in priority order:
+   - `data-locator-source` attribute (instant, if a compile-time injector is used)
+   - `_debugSource` (React 18, synchronous)
+   - `_debugStack` + source map (React 19, async with prefetch)
+4. **Prefetches `.map` source maps** on modifier keydown (handles Turbopack's sectioned format).
+5. **Decodes VLQ mappings** to resolve the original file, line, and column.
+6. Displays the path in a tooltip and (optionally) a props/state preview panel.
+7. **Alt+Click** opens the four-action picker; **Alt+Right-click** opens the component hierarchy.
 
-- Component name, file path, and line number
-- Current props and hook state (useState, useReducer, useRef, useMemo)
-- Rendered DOM HTML structure
-- Key computed CSS properties
+## Props / State preview
 
-This opens Claude Code in VS Code with the full component context pre-filled, so Claude can make targeted edits to the right file.
+When hovering with the modifier key held, a preview panel shows:
 
-## Comparison with Alternatives
-
-| Feature | nextjs-locator | click-to-react-component | LocatorJS | react-dev-inspector |
-|---------|---------------|--------------------------|-----------|---------------------|
-| React 19 support | Yes | No | Partial | No |
-| React 18 support | Yes (_debugSource) | Yes | Yes | Yes |
-| Turbopack support | Yes | No | No | No |
-| Setup | Drop-in component | Babel plugin | Browser ext + Babel | Babel/SWC plugin |
-| File path tooltip | Yes | No | No | No |
-| Props/State preview | Yes | No | No | No |
-| Component hierarchy | Yes (right-click) | Yes | No | No |
-| Claude Code integration | Yes | No | No | No |
-| Source map prefetch | Yes | N/A | N/A | N/A |
-| Compile-time fast path | Yes (optional) | N/A | N/A | N/A |
-| Dependencies | 0 | Small | Extension | Plugin |
-| Next.js App Router | Native | Needs config | Partial | Needs config |
-| Multi-editor | 5 editors | VS Code only | VS Code + others | VS Code + others |
-
-## Requirements
-
-- **React** >= 18.0.0
-- **Next.js** 13+ (App Router recommended)
-- **Development mode** only (completely removed in production)
-
-## How is this different?
-
-### vs [click-to-react-component](https://github.com/ericclemmons/click-to-component)
-
-Requires `@babel/plugin-transform-react-jsx-source` which injects `_debugSource` into every JSX element at compile time. React 19 removed `_debugSource` in favor of `_debugStack`, breaking this approach. `nextjs-locator` reads `_debugStack` natively and falls back to `_debugSource` for React 18 — no build plugin needed.
-
-### vs [LocatorJS](https://www.locatorjs.com/)
-
-Requires a browser extension or Babel plugin to inject `data-locator` attributes. Doesn't support Turbopack's sectioned source map format. `nextjs-locator` works by decoding source maps at runtime — zero build-time setup.
-
-### vs [react-dev-inspector](https://github.com/nicknisi/react-dev-inspector)
-
-Requires SWC/Babel plugin configuration. `nextjs-locator` achieves the same result with zero config by leveraging React's built-in debug information and runtime source map resolution. Plus, it offers component hierarchy navigation and file path preview that others don't.
-
-## Props/State Preview
-
-When hovering a component with the modifier key held, a preview panel appears showing:
-- **Props** — Current prop values (max 10, excluding `children`)
-- **Hook state** — `useState`, `useReducer`, `useMemo`, `useRef` values
-- **Render count** — How many times the component has been inspected
+- **Props** — current prop values (excluding `children`)
+- **Hook state** — `useState`, `useReducer`, `useMemo`, `useRef`
+- **Render count** — how many times the component has been inspected
 
 Disable with:
+
 ```tsx
 <Locator showPreview={false} />
 ```
 
-## Compile-Time Source Resolution (Optional)
+## Requirements
 
-For instant source resolution without runtime source map fetching, install the companion package:
-
-```bash
-npm install nextjs-locator-swc
-```
-
-```js
-// next.config.js
-const { withLocator } = require('nextjs-locator-swc');
-module.exports = withLocator({ /* your config */ });
-```
-
-This injects `data-locator-source` attributes at build time, which `nextjs-locator` reads directly for zero-latency clicks. See [nextjs-locator-swc](https://github.com/stkang9409/nextjs-locator-swc) for details.
+- **React** >= 18.0.0 (React 19 fully supported)
+- **Next.js** 13+ (App Router recommended) — also works with webpack builds
+- **Development mode** only (completely removed in production)
 
 ## TypeScript
 
-Full TypeScript support with exported types:
-
 ```typescript
-import type { LocatorProps, EditorProtocol, FiberInspection } from 'nextjs-locator';
+import type { LocatorProps, EditorProtocol, AgentTarget, FiberInspection } from 'click-to-agent';
 ```
+
+## Credits
+
+`click-to-agent` is a fork of [`nextjs-locator`](https://github.com/stkang9409/nextjs-locator) by **stkang9409**. Huge thanks for the original source-locator engine (React Fiber traversal, Turbopack source map decoding, multi-editor support). This fork focuses on the AI-coding-agent workflow.
 
 ## License
 
-MIT
+[MIT](./LICENSE) — original work © 2025 stkang9409, fork © 2026 stekovinbranturry.

@@ -4,6 +4,15 @@ export interface ContextMenuElements {
   container: HTMLDivElement;
 }
 
+/** A single action shown in the per-component action picker (Stage 2) */
+export interface MenuAction {
+  icon: string;
+  label: string;
+  color: string;
+  hoverBg: string;
+  run: (item: ContextMenuItem) => void;
+}
+
 /** Create the context menu container, appended to document.body */
 export function createContextMenu(): ContextMenuElements {
   const container = document.createElement('div');
@@ -30,8 +39,7 @@ export function showContextMenu(
   x: number,
   y: number,
   items: ContextMenuItem[],
-  onGoToCode: (item: ContextMenuItem) => void,
-  onAskClaude: (item: ContextMenuItem) => void,
+  actions: MenuAction[],
   skipToAction?: ContextMenuItem,
   onHover?: (item: ContextMenuItem) => void,
   onLeave?: () => void,
@@ -219,45 +227,32 @@ export function showContextMenu(
       return row;
     }
 
-    const codeRow = makeActionRow(
-      '↗',
-      '소스 코드로 이동',
-      '#cbd5e1',
-      'rgba(255,255,255,0.08)',
-      () => {
-        onGoToCode(item);
-        hideContextMenu(elements);
-      },
-    );
-
-    const claudeRow = makeActionRow(
-      '◎',
-      'Claude에게 묻기',
-      '#a78bfa',
-      'rgba(139,92,246,0.15)',
-      () => {
-        onAskClaude(item);
-        hideContextMenu(elements);
-      },
-    );
-
-    container.appendChild(codeRow);
-    container.appendChild(claudeRow);
-    actionRows.push(codeRow, claudeRow);
+    actions.forEach((action) => {
+      const row = makeActionRow(
+        action.icon,
+        action.label,
+        action.color,
+        action.hoverBg,
+        () => {
+          action.run(item);
+          hideContextMenu(elements);
+        },
+      );
+      container.appendChild(row);
+      actionRows.push(row);
+    });
 
     setKeydownHandler((e: KeyboardEvent) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         focusedIndex = Math.min(focusedIndex + 1, actionRows.length - 1);
         actionRows.forEach((r) => (r.style.background = ''));
-        actionRows[focusedIndex].style.background =
-          focusedIndex === 0 ? 'rgba(255,255,255,0.08)' : 'rgba(139,92,246,0.15)';
+        actionRows[focusedIndex].style.background = actions[focusedIndex].hoverBg;
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         focusedIndex = Math.max(focusedIndex - 1, 0);
         actionRows.forEach((r) => (r.style.background = ''));
-        actionRows[focusedIndex].style.background =
-          focusedIndex === 0 ? 'rgba(255,255,255,0.08)' : 'rgba(139,92,246,0.15)';
+        actionRows[focusedIndex].style.background = actions[focusedIndex].hoverBg;
       } else if (e.key === 'Enter' && focusedIndex >= 0) {
         e.preventDefault();
         actionRows[focusedIndex].click();

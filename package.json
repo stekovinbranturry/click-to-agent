@@ -1,28 +1,31 @@
 {
-  "name": "nextjs-locator",
-  "version": "0.4.0",
-  "description": "Alt+Click any React component to open its source in VS Code. Zero-config for Next.js with Turbopack.",
+  "name": "click-to-agent",
+  "version": "0.1.0",
+  "description": "Alt/Option+Click any React component to open its source — or send it to your AI coding agent (Cursor / Claude Code) with full context. Zero-config for Next.js + Turbopack + React 19.",
   "keywords": [
     "react",
     "nextjs",
     "developer-tools",
     "source-locator",
+    "ai",
+    "agent",
+    "cursor",
+    "claude-code",
     "vscode",
     "devtools",
     "click-to-component",
     "turbopack",
-    "react-devtools",
-    "cursor"
+    "react-devtools"
   ],
-  "author": "stkang9409",
+  "author": "stekovinbranturry <zhangkai-zk@foxmail.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/stkang9409/nextjs-locator"
+    "url": "https://github.com/stekovinbranturry/click-to-agent"
   },
-  "homepage": "https://github.com/stkang9409/nextjs-locator#readme",
+  "homepage": "https://github.com/stekovinbranturry/click-to-agent#readme",
   "bugs": {
-    "url": "https://github.com/stkang9409/nextjs-locator/issues"
+    "url": "https://github.com/stekovinbranturry/click-to-agent/issues"
   },
   "type": "module",
   "main": "./dist/index.cjs",

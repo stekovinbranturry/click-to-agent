@@ -1,5 +1,26 @@
 # Changelog
 
+## click-to-agent
+
+### 0.1.0 (2026-06-30)
+
+First release as `click-to-agent`, a fork of [`nextjs-locator`](https://github.com/stkang9409/nextjs-locator).
+
+#### Features
+
+- **Four per-component actions** in the Alt+Click / Alt+Right-click picker:
+  - ↗ **Go to source** — open the file in your editor
+  - ▹ **Ask Cursor** — open Cursor via `cursor://anysphere.cursor-deeplink/prompt?text=` with full component context
+  - ◎ **Ask Claude** — open Claude Code via `vscode://anthropic.claude-code/open?prompt=` with full component context
+  - ⧉ **Copy prompt** — copy the full component prompt to the clipboard
+- **Rich agent prompt** — instruction + component name/file/line + props + hook/class state + rendered DOM HTML + key computed CSS
+- **Deeplink-safe prompts** — encoded length capped at 28k (HTML shrunk/dropped as needed); `Copy prompt` keeps the full prompt
+- Fully English UI; zero runtime dependencies
+
+---
+
+## nextjs-locator (upstream history)
+
 ## 0.3.0 (2026-02-08)
 
 ### Features

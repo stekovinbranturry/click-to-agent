@@ -38,6 +38,7 @@ import {
   hideContextMenu,
   removeContextMenu,
   isContextMenuVisible,
+  type MenuAction,
 } from './lib/context-menu';
 import { inspectFiber } from './lib/fiber-inspect';
 import {
@@ -53,7 +54,8 @@ import {
   removeAskModal,
   isAskModalVisible,
 } from './lib/ask-modal';
-import { runAskClaude } from './lib/claude-prompt';
+import { runAskAgent } from './lib/agent-prompt';
+import { showToast, removeToast } from './lib/toast';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -103,14 +105,18 @@ async function resolveComponentSource(
 }
 
 /**
- * Dev Locator — Alt(Option)+Click to open source code in your editor.
+ * click-to-agent — Alt(Option)+Click any React component to open its source,
+ * or hand it to your AI coding agent with full context.
  *
  * Features:
  * - Alt+Hover: highlights component with name and source file path
- * - Alt+Click: opens source in editor
- * - Alt+Right-click: shows component hierarchy menu with two actions:
- *     - "↗ 코드": opens source in editor
- *     - "◎ Claude": opens Claude Code with rich component context prompt
+ * - Alt+Click: opens the per-component action picker
+ * - Alt+Right-click: shows the component hierarchy menu
+ * - Each component exposes four actions:
+ *     - "↗ Go to source": opens the source file in your editor
+ *     - "▹ Ask Cursor":    opens Cursor with a rich component-context prompt
+ *     - "◎ Ask Claude":    opens Claude Code with a rich component-context prompt
+ *     - "⧉ Copy prompt":   copies the component-context prompt to the clipboard
  * - Source map prefetching on modifier key press
  * - React 18 _debugSource fallback
  *
@@ -136,7 +142,7 @@ function LocatorImpl({
   useEffect(() => {
     if (!isEnabled) return;
 
-    console.log('[nextjs-locator] v' + __VERSION__ + ' initialized');
+    console.log('[click-to-agent] v' + __VERSION__ + ' initialized');
 
     const sourceMapCache = new Map<string, SourceMapSections>();
     const elements = createOverlay(highlightColor);
@@ -148,6 +154,114 @@ function LocatorImpl({
     let isModifierHeld = false;
     let currentHoverTarget: HTMLElement | null = null;
     let inspectDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const buildAskContext = (item: ContextMenuItem, element: HTMLElement) => ({
+      componentName: item.componentName,
+      fiber: item.fiber,
+      element,
+      filePath: item.filePath,
+      line: item.line,
+    });
+
+    /**
+     * Build the four-action set (Go to source / Ask Cursor / Ask Claude /
+     * Copy prompt) shared by Alt+Click and Alt+Right-click. `resolveFor`
+     * yields the already-resolved source for the chosen item (or null →
+     * resolve lazily); `element` is the DOM node the menu was opened from.
+     */
+    const makeActions = (
+      resolveFor: (item: ContextMenuItem) => ResolvedSource | null,
+      element: HTMLElement,
+    ): MenuAction[] => {
+      const goToSource = (item: ContextMenuItem) => {
+        const resolved = resolveFor(item);
+        if (resolved) {
+          window.open(
+            buildEditorUrl(
+              editor,
+              resolved.filePath,
+              resolved.originalLine,
+              resolved.originalColumn,
+            ),
+            '_self',
+          );
+          return;
+        }
+        resolveComponentSource(item.fiber, sourceMapCache, projectRoot)
+          .then((r) => {
+            if (r) {
+              window.open(
+                buildEditorUrl(editor, r.filePath, r.originalLine, r.originalColumn),
+                '_self',
+              );
+            }
+          })
+          .catch((err) =>
+            console.warn('[click-to-agent] Source map error:', err),
+          );
+      };
+
+      const ask = (item: ContextMenuItem, target: 'cursor' | 'claude') => {
+        const resolved = resolveFor(item);
+        const agentLabel = target === 'cursor' ? 'Cursor' : 'Claude';
+        showAskModal(askModal, item.componentName, agentLabel, async (instruction) => {
+          await runAskAgent({
+            target,
+            instruction,
+            context: buildAskContext(item, element),
+            resolved,
+          });
+          hideAskModal(askModal);
+        });
+      };
+
+      const copyPrompt = async (item: ContextMenuItem) => {
+        const resolved = resolveFor(item);
+        const { copied } = await runAskAgent({
+          target: 'copy',
+          instruction: '',
+          context: buildAskContext(item, element),
+          resolved,
+        });
+        if (copied) {
+          showToast('Prompt copied to clipboard');
+        } else {
+          showToast('Copy failed — see console');
+          console.warn('[click-to-agent] clipboard copy failed');
+        }
+      };
+
+      return [
+        {
+          icon: '↗',
+          label: 'Go to source',
+          color: '#cbd5e1',
+          hoverBg: 'rgba(255,255,255,0.08)',
+          run: goToSource,
+        },
+        {
+          icon: '▹',
+          label: 'Ask Cursor',
+          color: '#7dd3fc',
+          hoverBg: 'rgba(56,189,248,0.15)',
+          run: (item) => ask(item, 'cursor'),
+        },
+        {
+          icon: '◎',
+          label: 'Ask Claude',
+          color: '#a78bfa',
+          hoverBg: 'rgba(139,92,246,0.15)',
+          run: (item) => ask(item, 'claude'),
+        },
+        {
+          icon: '⧉',
+          label: 'Copy prompt',
+          color: '#cbd5e1',
+          hoverBg: 'rgba(255,255,255,0.08)',
+          run: copyPrompt,
+        },
+      ];
+    };
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === modifierKey) {
@@ -273,7 +387,7 @@ function LocatorImpl({
       const fiber = getFiberFromElement(target);
       if (!fiber) return;
 
-      // Resolve the nearest user component for Alt+click (single component, Stage 2 직행)
+      // Resolve the nearest user component for Alt+click (single component, jump to action picker)
       const componentFiber = findNearestComponentFiber(fiber);
       let resolved = await resolveComponentSource(fiber, sourceMapCache, projectRoot, target);
       if (!resolved && componentFiber) {
@@ -282,7 +396,7 @@ function LocatorImpl({
       if (!resolved || resolved.filePath.includes('node_modules')) return;
       if (!isModifierHeld) return;
 
-      // component fiber가 있으면 그걸 사용 (이름, props, hooks 추출용)
+      // Prefer the component fiber when present (used for name, props, hooks)
       const inspectionFiber = componentFiber ?? fiber;
       const componentName = getComponentName(inspectionFiber) ?? 'Unknown';
       const item: ContextMenuItem = {
@@ -299,34 +413,8 @@ function LocatorImpl({
         e.clientX,
         e.clientY,
         [item],
-        // onGoToCode
-        () => {
-          const url = buildEditorUrl(
-            editor,
-            capturedResolved.filePath,
-            capturedResolved.originalLine,
-            capturedResolved.originalColumn,
-          );
-          window.open(url, '_self');
-        },
-        // onAskClaude
-        (menuItem) => {
-          showAskModal(askModal, menuItem.componentName, async (instruction) => {
-            await runAskClaude({
-              instruction,
-              context: {
-                componentName: menuItem.componentName,
-                fiber: menuItem.fiber,
-                element: target,
-                filePath: menuItem.filePath,
-                line: menuItem.line,
-              },
-              resolved: capturedResolved,
-            });
-            hideAskModal(askModal);
-          });
-        },
-        item, // skipToAction → Stage 2 직행
+        makeActions(() => capturedResolved, target),
+        item, // skipToAction → jump straight to the action picker
       );
     };
 
@@ -389,61 +477,18 @@ function LocatorImpl({
         e.clientX,
         e.clientY,
         items,
-        // onGoToCode — reuse already-resolved source
-        (item) => {
-          const ent = userEntries.find((en) => en.fiber === item.fiber);
-          if (ent?.resolved) {
-            const url = buildEditorUrl(
-              editor,
-              ent.resolved.filePath,
-              ent.resolved.originalLine,
-              ent.resolved.originalColumn,
-            );
-            window.open(url, '_self');
-          } else {
-            resolveComponentSource(item.fiber, sourceMapCache, projectRoot)
-              .then((resolved) => {
-                if (resolved) {
-                  const url = buildEditorUrl(
-                    editor,
-                    resolved.filePath,
-                    resolved.originalLine,
-                    resolved.originalColumn,
-                            );
-                  window.open(url, '_self');
-                }
-              })
-              .catch((err) =>
-                console.warn('[nextjs-locator] Source map error:', err),
-              );
-          }
-        },
-        // onAskClaude — reuse already-resolved source
-        (item) => {
-          const ent = userEntries.find((en) => en.fiber === item.fiber);
-          const resolved = ent?.resolved ?? null;
-          showAskModal(askModal, item.componentName, async (instruction) => {
-            await runAskClaude({
-              instruction,
-              context: {
-                componentName: item.componentName,
-                fiber: item.fiber,
-                element: capturedTarget,
-                filePath: item.filePath,
-                line: item.line,
-              },
-              resolved,
-            });
-            hideAskModal(askModal);
-          });
-        },
+        makeActions(
+          (item) =>
+            userEntries.find((en) => en.fiber === item.fiber)?.resolved ?? null,
+          capturedTarget,
+        ),
         undefined, // skipToAction
-        // onHover — 부모 항목 호버 시 오버레이 이동
+        // onHover — move the overlay onto the hovered ancestor
         (item) => {
           const rect = getFiberBoundingRect(item.fiber);
           if (rect) positionOverlayByRect(elements, rect, item.componentName);
         },
-        // onLeave — 메뉴 밖으로 나가면 오버레이 숨김
+        // onLeave — hide the overlay when the pointer leaves the menu
         () => { hideOverlay(elements); },
       );
     };
@@ -475,6 +520,7 @@ function LocatorImpl({
       removeOverlay(elements);
       removeContextMenu(contextMenu);
       removeAskModal(askModal);
+      removeToast();
       if (previewPanel) removePreviewPanel(previewPanel);
       if (inspectDebounceTimer) clearTimeout(inspectDebounceTimer);
       document.body.style.cursor = '';

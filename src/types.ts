@@ -21,7 +21,10 @@ export interface LocatorProps {
   showPreview?: boolean;
 }
 
-/** Context passed to the "Ask Claude" workflow */
+/** Coding-agent target for the "Ask" / "Copy prompt" workflow */
+export type AgentTarget = 'cursor' | 'claude' | 'copy';
+
+/** Context passed to the "Ask agent" workflow */
 export interface AskContext {
   componentName: string;
   /* eslint-disable @typescript-eslint/no-explicit-any */
