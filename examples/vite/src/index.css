@@ -1,0 +1,156 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
+  background: radial-gradient(1200px 600px at 50% -10%, #1e293b, #0b1120);
+  color: #e2e8f0;
+  min-height: 100vh;
+}
+
+.page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 72px 24px 96px;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.badge {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  color: #c4b5fd;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 999px;
+  padding: 4px 12px;
+  margin-bottom: 20px;
+}
+
+.hero h1 {
+  font-size: 34px;
+  line-height: 1.2;
+  margin: 0 0 16px;
+  font-weight: 700;
+}
+
+.subtitle {
+  color: #94a3b8;
+  font-size: 16px;
+  margin: 0;
+}
+
+kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  padding: 2px 7px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 56px;
+}
+
+.card {
+  background: rgba(148, 163, 184, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+  padding: 22px;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.card:hover {
+  border-color: rgba(196, 181, 253, 0.5);
+  transform: translateY(-2px);
+}
+
+.card-icon {
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.card h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+
+.card p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.counter-section {
+  text-align: center;
+}
+
+.counter-section h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin-bottom: 20px;
+}
+
+.counter {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  background: rgba(148, 163, 184, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+  padding: 24px 32px;
+}
+
+.counter-label {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.counter-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.counter button {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 20px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.counter button:hover {
+  background: #334155;
+}
+
+.counter-value {
+  font-size: 28px;
+  font-weight: 700;
+  min-width: 48px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

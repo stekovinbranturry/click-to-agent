@@ -17,7 +17,7 @@ export default function RootLayout({
       <body>
         {children}
         {/* Dev-only. Try editor="cursor" to make "Go to source" open Cursor. */}
-        <Locator />
+        <Locator editor="cursor" />
       </body>
     </html>
   );
