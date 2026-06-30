@@ -19,7 +19,7 @@ export default defineConfig({
   minify: false,
   splitting: false,
   treeshake: true,
-  external: ['react', 'next'],
+  external: ['react', 'next', '@jridgewell/trace-mapping'],
   define: {
     __VERSION__: JSON.stringify(version),
   },

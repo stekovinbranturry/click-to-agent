@@ -177,7 +177,7 @@ NEXT_PUBLIC_PROJECT_ROOT=/Users/you/projects/my-app
    - `_debugSource` (React 18, synchronous)
    - `_debugStack` + source map (React 19, async with prefetch)
 4. **Prefetches source maps** on modifier keydown — external `.map` files and inline `data:` URIs alike.
-5. **Decodes mappings** via [`@jridgewell/trace-mapping`](https://github.com/jridgewell/trace-mapping) (`AnyMap`) to resolve the original file, line, and column. Handles both Turbopack's *sectioned* maps (Next.js) and the standard maps Vite/webpack emit. Bundled into `dist`, so the package still ships with zero runtime dependencies.
+5. **Decodes mappings** via [`@jridgewell/trace-mapping`](https://github.com/jridgewell/trace-mapping) (`AnyMap`) to resolve the original file, line, and column. Handles both Turbopack's *sectioned* maps (Next.js) and the standard maps Vite/webpack emit.
 6. Displays the path in a tooltip and (optionally) a props/state preview panel.
 7. **Alt+Click** opens the four-action picker; **Alt+Right-click** opens the component hierarchy.
 
