@@ -1,0 +1,53 @@
+name: Release
+
+# Changesets automation:
+# - PRs with .changeset/*.md → after merge, opens "Version Packages" PR
+# - Merging Version Packages PR → builds and publishes to npm
+#
+# Requires NPM_TOKEN repo secret (npm Automation token).
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test
+        run: pnpm test
+
+      - name: Create Release Pull Request or Publish
+        uses: changesets/action@v1
+        with:
+          version: pnpm changeset version
+          publish: pnpm release
+          title: "Version Packages"
+          commit: "chore(release): version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
