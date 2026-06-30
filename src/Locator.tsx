@@ -1,12 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import type {
-  LocatorProps,
-  SourceMapSections,
-  ResolvedSource,
-  ContextMenuItem,
-} from './types';
+import type { LocatorProps, ResolvedSource, ContextMenuItem } from './types';
 import {
   getFiberFromElement,
   findNearestComponentFiber,
@@ -22,6 +17,7 @@ import {
   resolveSourceMap,
   prefetchSourceMap,
   toRelativePath,
+  type SourceMapCache,
 } from './lib/source-map';
 import { buildEditorUrl } from './lib/editor';
 import {
@@ -72,8 +68,8 @@ const MODIFIER_KEYS: Record<string, string> = {
  */
 async function resolveComponentSource(
   fiber: any,
-  cache: Map<string, SourceMapSections>,
-  _projectRoot?: string,
+  cache: SourceMapCache,
+  projectRoot?: string,
   element?: HTMLElement,
 ): Promise<ResolvedSource | null> {
   // Fastest path: compile-time injected data-locator-source attribute
@@ -101,6 +97,7 @@ async function resolveComponentSource(
     stackInfo.line,
     stackInfo.column,
     cache,
+    projectRoot,
   );
 }
 
@@ -144,7 +141,7 @@ function LocatorImpl({
 
     console.log('[click-to-agent] v' + __VERSION__ + ' initialized');
 
-    const sourceMapCache = new Map<string, SourceMapSections>();
+    const sourceMapCache: SourceMapCache = new Map();
     const elements = createOverlay(highlightColor);
     const contextMenu = createContextMenu();
     const previewPanel = showPreview ? createPreviewPanel() : null;

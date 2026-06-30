@@ -16,7 +16,7 @@ pnpm --filter example-vite dev    # Terminal B: start Vite
 Open http://localhost:5273, then hold **Alt** / **Option** and interact with a
 component (hover / click / right-click).
 
-## What to expect (current state)
+## What to expect
 
 `click-to-agent` resolves source via React's debug info + source maps. On
 **React 19 + Vite** (verified with this example):
@@ -25,16 +25,32 @@ component (hover / click / right-click).
 |---------|--------|
 | Highlight + component name (Alt+Hover) | ✅ |
 | Props / state preview (props, hooks, render count) | ✅ |
-| **Alt+Click action picker** (Go to source / Ask Cursor / Ask Claude / Copy prompt) | ❌ not yet |
-| **Alt+Right-click hierarchy** | ❌ not yet |
+| **Alt+Click action picker** (Go to source / Ask Cursor / Ask Claude / Copy prompt) | ✅ |
+| **Alt+Right-click hierarchy** | ✅ |
 
-Why: the source-map resolver currently only understands Turbopack's
-*sectioned* source map format (Next.js). Vite serves standard (non-sectioned)
-source maps and React 19 dropped `_debugSource`, so source resolution returns
-`null`. `handleClick` / `handleContextMenu` bail out early when resolution
-fails — so the whole action menu (not just "Go to source") doesn't appear here
-yet, even though the props/DOM/CSS context it would send is available.
+Source resolution uses [`@jridgewell/trace-mapping`](https://github.com/jridgewell/trace-mapping)
+(`AnyMap`), which understands both Turbopack's *sectioned* maps (Next.js) and
+the standard maps Vite serves — inline `data:` URIs in dev, external `.map`
+files in preview/build.
 
-Adding a generic (non-sectioned) source-map path — e.g. via
-`@jridgewell/trace-mapping`, which Vite itself uses — would make Vite resolve,
-unlocking both "Go to source" and the agent actions.
+### `projectRoot` on Vite
+
+Vite's source maps reference sources by a root-relative name (e.g. `App.tsx`),
+which resolves against the dev-server URL (`/src/App.tsx`) — not an absolute
+filesystem path. To make **Go to source** open the right file, this example
+passes `projectRoot` to `<Locator>`:
+
+```ts
+// vite.config.ts
+export default defineConfig({
+  define: { __PROJECT_ROOT__: JSON.stringify(process.cwd()) },
+});
+```
+
+```tsx
+// src/main.tsx
+<Locator enabled={import.meta.env.DEV} projectRoot={__PROJECT_ROOT__} />
+```
+
+Files served via Vite's `/@fs/<abs>` (outside the root) resolve to absolute
+paths automatically and don't need `projectRoot`.

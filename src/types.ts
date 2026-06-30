@@ -41,32 +41,12 @@ export interface StackFrame {
   column: number;
 }
 
-/** A single section in a Turbopack source map */
-export interface SourceMapSection {
-  offset: { line: number; column: number };
-  map: {
-    version: number;
-    sources: string[];
-    mappings: string;
-    names?: string[];
-    sourcesContent?: string[];
-  };
-}
-
-export type SourceMapSections = SourceMapSection[];
-
 /** Resolved original source location */
 export interface ResolvedSource {
   filePath: string;
   originalLine: number;
   originalColumn: number;
   endLine?: number;
-}
-
-/** Decoded original position from VLQ mappings */
-export interface OriginalPosition {
-  originalLine: number;
-  originalColumn: number;
 }
 
 /** React 18 _debugSource object on Fiber nodes */

@@ -4,10 +4,12 @@ import { Locator } from 'click-to-agent';
 import { App } from './App';
 import './index.css';
 
+declare const __PROJECT_ROOT__: string;
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
-    {/* Dev-only. Try editor="cursor" to make "Go to source" open Cursor. */}
-    <Locator enabled={import.meta.env.DEV} />
+    {/* Dev-only. projectRoot lets "Go to source" resolve absolute paths on Vite. */}
+    <Locator enabled={import.meta.env.DEV} editor="cursor" projectRoot={__PROJECT_ROOT__} />
   </StrictMode>,
 );
