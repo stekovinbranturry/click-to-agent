@@ -2,7 +2,7 @@
 
 **Alt/Option + Click any React component to open its source — or hand it to your AI coding agent with full context.**
 
-Zero-config for Next.js 15/16 with Turbopack and React 19. No Babel plugin, no browser extension, no setup.
+Zero-config for **Next.js** (Turbopack & webpack), and works with **Vite** with one extra prop. React 18 & 19. No Babel plugin, no browser extension.
 
 <!-- TODO: Add demo GIF here -->
 <!-- ![click-to-agent demo](docs/demo.gif) -->
@@ -48,6 +48,19 @@ So the agent lands on the right file with everything it needs to make a targeted
 | Copy | Clipboard API (with a legacy `execCommand` fallback) |
 
 Deeplink prompts are capped at ~28k encoded characters; if a component's context is larger, the DOM HTML is shrunk (and dropped if still too large) so the link stays valid. The **Copy prompt** action always copies the full, untruncated prompt.
+
+## Framework support
+
+Source resolution uses React's debug info + source maps, decoded with [`@jridgewell/trace-mapping`](https://github.com/jridgewell/trace-mapping) — which understands both Turbopack's *sectioned* maps and the standard maps Vite/webpack emit (external `.map` files and inline `data:` URIs).
+
+| Framework | Status | Notes |
+|-----------|--------|-------|
+| Next.js + Turbopack | ✅ Zero-config | Sources resolve to absolute paths automatically |
+| Next.js + webpack | ✅ Zero-config | |
+| Vite | ✅ One prop | Pass [`projectRoot`](#vite) so root-relative sources resolve to absolute paths |
+| Other React + bundler with source maps | ⚙️ Likely | Same `_debugStack` + source-map path; set `projectRoot` if "Go to source" opens the wrong path |
+
+React 18 (`_debugSource`) and React 19 (`_debugStack`) are both supported.
 
 ## Installation
 
@@ -96,6 +109,37 @@ export default function App({ Component, pageProps }: AppProps) {
 }
 ```
 
+### Vite
+
+Vite's source maps reference sources by a root-relative name, so pass `projectRoot` to let **Go to source** resolve absolute paths. Expose the dev-server root via a `define`:
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  define: { __PROJECT_ROOT__: JSON.stringify(process.cwd()) },
+});
+```
+
+```tsx
+// src/main.tsx
+import { Locator } from 'click-to-agent';
+
+declare const __PROJECT_ROOT__: string;
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+    <Locator enabled={import.meta.env.DEV} projectRoot={__PROJECT_ROOT__} />
+  </StrictMode>,
+);
+```
+
+> See [`examples/vite`](./examples/vite) for a complete, runnable setup.
+
 `<Locator />` renders nothing and is only active in development — it is completely tree-shaken from production builds.
 
 ## Keyboard & Mouse
@@ -142,16 +186,20 @@ export default function App({ Component, pageProps }: AppProps) {
 
 ### Project root
 
-If source map paths don't resolve correctly (e.g. monorepos or custom setups), set the project root:
+If source map paths don't resolve to absolute paths (Vite, monorepos, or custom setups), set the project root:
 
 ```tsx
 <Locator projectRoot="/Users/you/projects/my-app" />
 ```
 
+On Next.js you can instead use an env var:
+
 ```bash
 # .env.local
 NEXT_PUBLIC_PROJECT_ROOT=/Users/you/projects/my-app
 ```
+
+On Vite, inject it via `define` rather than hardcoding — see [Vite](#vite) above.
 
 ### Custom modifier key
 
@@ -198,7 +246,7 @@ Disable with:
 ## Requirements
 
 - **React** >= 18.0.0 (React 19 fully supported)
-- **Next.js** 13+ (App Router recommended) — also works with webpack builds
+- A bundler that emits source maps in dev: **Next.js** 13+ (Turbopack or webpack), **Vite**, or similar — Next.js is a peer dependency but optional
 - **Development mode** only (completely removed in production)
 
 ## TypeScript
