@@ -17,6 +17,7 @@ import {
   resolveSourceMap,
   prefetchSourceMap,
   toRelativePath,
+  resolveEditorFilePath,
   type SourceMapCache,
 } from './lib/source-map';
 import { buildEditorUrl } from './lib/editor';
@@ -176,7 +177,7 @@ function LocatorImpl({
           window.open(
             buildEditorUrl(
               editor,
-              resolved.filePath,
+              resolveEditorFilePath(resolved.filePath, projectRoot),
               resolved.originalLine,
               resolved.originalColumn,
             ),
@@ -188,7 +189,12 @@ function LocatorImpl({
           .then((r) => {
             if (r) {
               window.open(
-                buildEditorUrl(editor, r.filePath, r.originalLine, r.originalColumn),
+                buildEditorUrl(
+                  editor,
+                  resolveEditorFilePath(r.filePath, projectRoot),
+                  r.originalLine,
+                  r.originalColumn,
+                ),
                 '_self',
               );
             }
@@ -437,14 +443,33 @@ function LocatorImpl({
       const ancestry = collectComponentAncestry(fiber);
       if (ancestry.length === 0) return;
 
-      // Resolve all sources in parallel — source maps are prefetched on modifier keydown
+      const componentFiber = findNearestComponentFiber(fiber);
+
+      // Resolve all sources in parallel — source maps are prefetched on modifier keydown.
+      // Parent component fibers often lack _debugStack in React 19; for the nearest
+      // user component, fall back to the same target-based resolution Alt+Click uses.
       const resolvedEntries = await Promise.all(
         ancestry.map(async ({ fiber: f, name }) => {
-          const resolved = await resolveComponentSource(
+          let resolved = await resolveComponentSource(
             f,
             sourceMapCache,
             projectRoot,
           ).catch(() => null);
+          if (!resolved && componentFiber && f === componentFiber) {
+            resolved =
+              (await resolveComponentSource(
+                fiber,
+                sourceMapCache,
+                projectRoot,
+                target,
+              ).catch(() => null)) ??
+              (await resolveComponentSource(
+                componentFiber,
+                sourceMapCache,
+                projectRoot,
+                target,
+              ).catch(() => null));
+          }
           return { fiber: f, name, resolved };
         }),
       );
@@ -455,12 +480,37 @@ function LocatorImpl({
       // Keep only components that resolve to user source. This drops framework
       // internals (e.g. Next.js SegmentViewNode / *Boundary) that either fail to
       // resolve or live in node_modules, leaving a clean user-component hierarchy.
-      const userEntries = resolvedEntries.filter(
+      let userEntries = resolvedEntries.filter(
         ({ resolved }) =>
           resolved != null && !resolved.filePath.includes('node_modules'),
       );
 
-      if (userEntries.length === 0) return;
+      // Last resort: if every ancestor failed (common on React 19 + Vite/Start when
+      // only the clicked DOM fiber carries _debugStack), show a single-item menu
+      // using the same resolution path as Alt+Click.
+      if (userEntries.length === 0) {
+        const fallback =
+          (await resolveComponentSource(
+            fiber,
+            sourceMapCache,
+            projectRoot,
+            target,
+          ).catch(() => null)) ??
+          (componentFiber
+            ? await resolveComponentSource(
+                componentFiber,
+                sourceMapCache,
+                projectRoot,
+                target,
+              ).catch(() => null)
+            : null);
+        if (!fallback || fallback.filePath.includes('node_modules')) return;
+        const name =
+          (componentFiber && getComponentName(componentFiber)) ?? 'Unknown';
+        userEntries = [
+          { fiber: componentFiber ?? fiber, name, resolved: fallback },
+        ];
+      }
 
       const capturedTarget = target;
 

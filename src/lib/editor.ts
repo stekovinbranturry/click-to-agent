@@ -25,10 +25,15 @@ export function buildEditorUrl(
   column: number,
 ): string {
   const protocol = EDITOR_PROTOCOLS[editor];
+  // Protocols are `vscode://file` / `cursor://file` — need a slash before absolute paths.
+  const path =
+    filePath.startsWith('/') || /^[A-Za-z]:[\\/]/.test(filePath)
+      ? filePath
+      : `/${filePath}`;
 
   if (editor === 'webstorm') {
-    return `${protocol}${filePath}&line=${line}&column=${column}`;
+    return `${protocol}${path}&line=${line}&column=${column}`;
   }
 
-  return `${protocol}${filePath}:${line}:${column}`;
+  return `${protocol}${path}:${line}:${column}`;
 }

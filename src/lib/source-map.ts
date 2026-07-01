@@ -27,6 +27,59 @@ function envProjectRoot(): string {
 }
 
 /**
+ * Source maps from webpack/Rspack (Rsbuild) sometimes encode absolute paths
+ * without a leading slash, e.g. `Users/foo/project/src/App.tsx` on macOS.
+ */
+function isAbsoluteLikePath(path: string): boolean {
+  return (
+    path.startsWith('/') ||
+    path.startsWith('Users/') ||
+    path.startsWith('home/') ||
+    /^[A-Za-z]:[\\/]/.test(path)
+  );
+}
+
+function ensureAbsolutePath(path: string): string {
+  if (path.startsWith('/')) return path;
+  if (path.startsWith('Users/') || path.startsWith('home/')) return `/${path}`;
+  return path;
+}
+
+/**
+ * Clean up file paths returned by bundler source maps.
+ * - Ensure macOS/Linux absolute paths have a leading slash (`Users/...` → `/Users/...`)
+ * - Strip an accidental `{projectRoot}/` prefix before an absolute path segment
+ *   (Rspack/Rsbuild sometimes yields `Users/...` without `/`, which was joined with projectRoot)
+ */
+function sanitizeFilePath(path: string, projectRoot?: string): string {
+  let p = path;
+  const root = projectRoot ?? envProjectRoot();
+
+  if (root) {
+    const withSlash = `${root}/`;
+    const rest = p.startsWith(withSlash) ? p.slice(withSlash.length) : null;
+    if (rest && isAbsoluteLikePath(rest)) {
+      p = ensureAbsolutePath(rest);
+    } else if (p.startsWith(root) && p.length > root.length) {
+      const suffix = p.slice(root.length);
+      if (suffix.startsWith('/Users/') || suffix.startsWith('/home/')) {
+        p = suffix;
+      }
+    }
+  }
+
+  return isAbsoluteLikePath(p) ? ensureAbsolutePath(p) : p;
+}
+
+/** Absolute path safe for editor deeplinks (`cursor://file/...`, `vscode://file/...`). */
+export function resolveEditorFilePath(
+  filePath: string,
+  projectRoot?: string,
+): string {
+  return sanitizeFilePath(filePath, projectRoot);
+}
+
+/**
  * Convert an absolute file path to a relative one for display.
  * Strips projectRoot prefix, or looks for common markers like src/, app/.
  */
@@ -34,19 +87,20 @@ export function toRelativePath(
   absolutePath: string,
   projectRoot?: string,
 ): string {
+  const normalized = sanitizeFilePath(absolutePath, projectRoot);
   const root = projectRoot ?? envProjectRoot();
-  if (root && absolutePath.startsWith(root)) {
-    const relative = absolutePath.slice(root.length);
+  if (root && normalized.startsWith(root)) {
+    const relative = normalized.slice(root.length);
     return relative.startsWith('/') ? relative.slice(1) : relative;
   }
   // Try to find common directory markers
   const markers = ['/src/', '/app/', '/pages/', '/components/'];
   for (const marker of markers) {
-    const idx = absolutePath.indexOf(marker);
-    if (idx !== -1) return absolutePath.slice(idx + 1);
+    const idx = normalized.indexOf(marker);
+    if (idx !== -1) return normalized.slice(idx + 1);
   }
   // Last resort: return last 3 path segments
-  const parts = absolutePath.split('/');
+  const parts = normalized.split('/');
   return parts.slice(-3).join('/');
 }
 
@@ -89,36 +143,42 @@ function normalizeSourcePath(source: string, projectRoot?: string): string {
   const qh = s.search(/[?#]/);
   if (qh !== -1) s = s.slice(0, qh);
 
-  if (s.startsWith('file://')) return s.slice('file://'.length);
-  if (s.startsWith('turbopack:///')) {
-    return extractPathFromTurbopack(s, projectRoot);
-  }
+  let result = s;
 
-  const webpack = s.match(/^webpack:\/\/[^/]*\/(?:\.\/)?(.*)$/);
-  if (webpack) {
-    const rel = webpack[1];
-    if (rel.startsWith('/')) return rel;
-    const root = projectRoot ?? envProjectRoot();
-    return root ? `${root}/${rel}` : rel;
-  }
-
-  if (s.startsWith('http://') || s.startsWith('https://')) {
-    let pathname: string;
+  if (s.startsWith('file://')) {
+    result = s.slice('file://'.length);
+  } else if (s.startsWith('turbopack:///')) {
+    result = extractPathFromTurbopack(s, projectRoot);
+  } else if (/^webpack:\/\//.test(s)) {
+    const webpack = s.match(/^webpack:\/\/[^/]*\/(?:\.\/)?(.*)$/);
+    const rel = webpack?.[1] ?? s;
+    if (isAbsoluteLikePath(rel)) {
+      result = ensureAbsolutePath(rel);
+    } else {
+      const root = projectRoot ?? envProjectRoot();
+      result = root ? `${root}/${rel}` : rel;
+    }
+  } else if (s.startsWith('http://') || s.startsWith('https://')) {
     try {
-      pathname = new URL(s).pathname;
+      const pathname = new URL(s).pathname;
+      if (pathname.startsWith('/@fs/')) {
+        result = pathname.slice('/@fs'.length);
+      } else {
+        const root = projectRoot ?? envProjectRoot();
+        result = root
+          ? pathname.startsWith('/')
+            ? `${root}${pathname}`
+            : `${root}/${pathname}`
+          : pathname;
+      }
     } catch {
-      return s;
+      result = s;
     }
-    // Vite serves out-of-root files via /@fs/<absolute path>
-    if (pathname.startsWith('/@fs/')) return pathname.slice('/@fs'.length);
-    const root = projectRoot ?? envProjectRoot();
-    if (root) {
-      return pathname.startsWith('/') ? `${root}${pathname}` : `${root}/${pathname}`;
-    }
-    return pathname;
+  } else if (isAbsoluteLikePath(s)) {
+    result = ensureAbsolutePath(s);
   }
 
-  return s;
+  return sanitizeFilePath(result, projectRoot);
 }
 
 /**

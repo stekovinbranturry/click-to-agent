@@ -1,83 +1,76 @@
 # click-to-agent
 
-**Alt/Option + Click any React component to open its source — or hand it to your AI coding agent with full context.**
+**English** · [简体中文](./README.zh-CN.md)
 
-Zero-config for **Next.js** (Turbopack & webpack), and works with **Vite** with one extra prop. React 18 & 19. No Babel plugin, no browser extension.
+**<kbd>⌥</kbd> Option / <kbd>⎇</kbd> Alt + click any React component → jump to source, or hand it to your AI agent with full context.**
+
+Dev-only · React 18 & 19 · No browser extension · No Babel plugin.
 
 ![click-to-agent demo](https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/demo.gif)
 
-> Fork of the excellent [`nextjs-locator`](https://github.com/stkang9409/nextjs-locator) by stkang9409 (MIT). `click-to-agent` keeps the source-locator core and adds first-class **"send this component to an AI coding agent"** actions (Cursor / Claude Code / clipboard).
+---
 
-## What you get
+## 1. What it does
 
-Hold the modifier key (Alt on Windows/Linux, Option on Mac) and interact with any component:
+Hold <kbd>⌥</kbd> **Option** (Mac) or <kbd>⎇</kbd> **Alt** (Win/Linux) and interact with any component:
 
-- **Alt + Hover** — highlight the component, show its name and resolved source path
-- **Alt + Click** — open the action picker for that component
-- **Alt + Right-click** — show the full component ancestry, then pick a component to act on
+| Gesture | Result |
+|---------|--------|
+| <kbd>⌥</kbd> / <kbd>⎇</kbd> + **Hover** | Red overlay, component name, source path, props/state preview |
+| <kbd>⌥</kbd> / <kbd>⎇</kbd> + **Click** | Four-action picker (see below) |
+| <kbd>⌥</kbd> / <kbd>⎇</kbd> + **Right-click** | Component ancestry tree → pick a parent → act on it |
 
-![Alt + Right-click shows the component ancestry — pick a parent component to act on](https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/right-click.gif)
+![Option/Alt + Right-click hierarchy](https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/right-click.gif)
 
-Every component exposes **four actions**:
+**Four actions** on every component:
 
-| Action | What it does |
-|--------|--------------|
-| ↗ **Go to source** | Opens the source file at the exact line in your editor |
-| ▹ **Ask Cursor** | Opens **Cursor** with a rich, pre-filled prompt about the component |
-| ◎ **Ask Claude** | Opens **Claude Code** with a rich, pre-filled prompt about the component |
-| ⧉ **Copy prompt** | Copies the full component prompt to your clipboard |
+| | Action | What happens |
+|---|--------|--------------|
+| ↗ | **Go to source** | Open the file at the exact line in your editor |
+| ▹ | **Ask Cursor** | Deeplink to Cursor with a rich, pre-filled prompt |
+| ◎ | **Ask Claude** | Deeplink to Claude Code with the same context |
+| ⧉ | **Copy prompt** | Copy the full prompt to clipboard |
 
-![The four-action picker, with the component highlighted and its props/state preview](https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/action-picker.png)
+![Action picker](https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/action-picker.png)
 
-For **Ask Cursor** / **Ask Claude**, a small modal asks for your instruction (e.g. *"make this button full-width and blue"*). The prompt handed to the agent includes:
+**Agent prompts include:** component name · source path & line · props (JSON) · hook/class state · rendered DOM HTML · key computed CSS.
 
-- Component name, source file path, and line number
-- Current props (JSON)
-- Hook state — `useState` / `useReducer` / `useMemo` / `useRef` — or class component state (JSON)
-- The rendered DOM HTML
-- Key computed CSS (layout, spacing, color, typography, etc.)
+**Why use it**
 
-So the agent lands on the right file with everything it needs to make a targeted edit.
+- **Zero friction** — point at UI, don't hunt through the component tree
+- **Agent-ready context** — Cursor / Claude get props, state, DOM, and CSS in one shot
+- **Works with your stack** — Next.js zero-config; Vite / TanStack Start / Rsbuild need one `projectRoot` prop
+- **Dev-only** — zero impact on production builds
 
-## How it routes to each agent
+---
 
-| Target | Mechanism |
-|--------|-----------|
-| Cursor | `cursor://anysphere.cursor-deeplink/prompt?text=…` deeplink |
-| Claude Code | `vscode://anthropic.claude-code/open?prompt=…` deeplink |
-| Copy | Clipboard API (with a legacy `execCommand` fallback) |
+## 2. Supported frameworks
 
-Deeplink prompts are capped at ~28k encoded characters; if a component's context is larger, the DOM HTML is shrunk (and dropped if still too large) so the link stays valid. The **Copy prompt** action always copies the full, untruncated prompt.
+| | Framework | Setup | Example |
+|---|-----------|-------|---------|
+| <img src="https://cdn.simpleicons.org/nextdotjs/000000" width="22" height="22" alt="" /> | **Next.js** (Turbopack / webpack) | Zero-config | [`examples/nextjs`](./examples/nextjs) |
+| <img src="https://cdn.simpleicons.org/vite/646CFF" width="22" height="22" alt="" /> | **Vite** + React | `projectRoot` via `define` | [`examples/vite`](./examples/vite) |
+| <img src="https://cdn.simpleicons.org/tanstack/0055FF" width="22" height="22" alt="" /> | **TanStack Start** | Same as Vite (`define` + client boundary) | [`examples/tanstack`](./examples/tanstack) |
+| <img src="https://cdn.simpleicons.org/rspack/8A8A8A" width="22" height="22" alt="" /> | **Rsbuild / Rspack** + React | `projectRoot` via `source.define` | [`examples/rsbuild`](./examples/rsbuild) |
 
-## Framework support
+React ≥ 18 · dev-mode source maps · development only.
 
-Source resolution uses React's debug info + source maps, decoded with [`@jridgewell/trace-mapping`](https://github.com/jridgewell/trace-mapping) — which understands both Turbopack's *sectioned* maps and the standard maps Vite/webpack emit (external `.map` files and inline `data:` URIs).
+---
 
-| Framework | Status | Notes |
-|-----------|--------|-------|
-| Next.js + Turbopack | ✅ Zero-config | Sources resolve to absolute paths automatically |
-| Next.js + webpack | ✅ Zero-config | |
-| Vite | ✅ One prop | Pass [`projectRoot`](#vite) so root-relative sources resolve to absolute paths |
-| Other React + bundler with source maps | ⚙️ Likely | Same `_debugStack` + source-map path; set `projectRoot` if "Go to source" opens the wrong path |
+## 3. Quick start by framework
 
-React 18 (`_debugSource`) and React 19 (`_debugStack`) are both supported.
-
-## Installation
+### Install
 
 ```bash
-npm install click-to-agent
-# or
-yarn add click-to-agent
-# or
 pnpm add click-to-agent
+# npm install click-to-agent
+# yarn add click-to-agent
 ```
 
-## Quick Start
-
-### Next.js App Router
+### Next.js — zero-config
 
 ```tsx
-// app/layout.tsx
+// app/layout.tsx  (or pages/_app.tsx)
 import { Locator } from 'click-to-agent';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -85,42 +78,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html>
       <body>
         {children}
-        <Locator />
+        <Locator editor="cursor" />
       </body>
     </html>
   );
 }
 ```
 
-### Next.js Pages Router
+Optional env var instead of `projectRoot` prop:
 
-```tsx
-// pages/_app.tsx
-import { Locator } from 'click-to-agent';
-import type { AppProps } from 'next/app';
-
-export default function App({ Component, pageProps }: AppProps) {
-  return (
-    <>
-      <Component {...pageProps} />
-      <Locator />
-    </>
-  );
-}
+```bash
+# .env.local
+NEXT_PUBLIC_PROJECT_ROOT=/absolute/path/to/your/app
 ```
 
-### Vite
-
-Vite's source maps reference sources by a root-relative name, so pass `projectRoot` to let **Go to source** resolve absolute paths. Expose the dev-server root via a `define`:
+### Vite — one `define`
 
 ```ts
 // vite.config.ts
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-
 export default defineConfig({
-  plugins: [react()],
   define: { __PROJECT_ROOT__: JSON.stringify(process.cwd()) },
+  // ...
 });
 ```
 
@@ -133,132 +111,96 @@ declare const __PROJECT_ROOT__: string;
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
-    <Locator enabled={import.meta.env.DEV} projectRoot={__PROJECT_ROOT__} />
+    <Locator enabled={import.meta.env.DEV} editor="cursor" projectRoot={__PROJECT_ROOT__} />
   </StrictMode>,
 );
 ```
 
-> See [`examples/vite`](./examples/vite) for a complete, runnable setup.
+### TanStack Start — Vite `define` + client boundary
 
-`<Locator />` renders nothing and is only active in development — it is completely tree-shaken from production builds.
+TanStack Start uses SSR; wrap `<Locator>` in a `'use client'` component:
 
-## Keyboard & Mouse
+```ts
+// vite.config.ts
+define: { __PROJECT_ROOT__: JSON.stringify(process.cwd()) },
+```
 
-| Shortcut | Action |
-|----------|--------|
-| **Alt + Hover** | Highlight component with name and source path |
-| **Alt + Click** | Open the four-action picker for that component |
-| **Alt + Right-click** | Show the component hierarchy, then pick a component |
-| **Arrow Up / Down** | Navigate menu items |
-| **Enter** | Select |
-| **Escape** | Dismiss |
+```tsx
+// src/components/LocatorDev.tsx
+'use client';
+import { Locator } from 'click-to-agent';
+declare const __PROJECT_ROOT__: string;
 
-> On Mac, use **Option** instead of Alt.
+export function LocatorDev() {
+  if (!import.meta.env.DEV) return null;
+  return <Locator editor="cursor" projectRoot={__PROJECT_ROOT__} />;
+}
+```
 
-## Props
+```tsx
+// src/routes/__root.tsx — inside <body>
+<LocatorDev />
+```
+
+### Rsbuild / Rspack — `source.define`
+
+```ts
+// rsbuild.config.ts
+export default defineConfig({
+  source: {
+    define: { __PROJECT_ROOT__: JSON.stringify(process.cwd()) },
+  },
+  // ...
+});
+```
+
+```tsx
+// src/index.tsx
+import { Locator } from 'click-to-agent';
+declare const __PROJECT_ROOT__: string;
+
+root.render(
+  <StrictMode>
+    <App />
+    {import.meta.env.DEV && (
+      <Locator editor="cursor" projectRoot={__PROJECT_ROOT__} />
+    )}
+  </StrictMode>,
+);
+```
+
+---
+
+## 4. `<Locator />` props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `editor` | `EditorProtocol` | `'vscode'` | Editor used by **Go to source** |
-| `modifier` | `'alt' \| 'ctrl' \| 'meta' \| 'shift'` | `'alt'` | Modifier key to activate |
-| `highlightColor` | `string` | `'#ef4444'` | Overlay border color (CSS color) |
-| `projectRoot` | `string` | — | Absolute project root path (for path resolution) |
-| `enabled` | `boolean` | `true` in dev | Force enable/disable |
-| `showPreview` | `boolean` | `true` | Show props/state preview panel on Alt+hover |
-
-### Editor support (Go to source)
-
-| Editor | `editor` value | Protocol |
-|--------|----------------|----------|
-| VS Code | `'vscode'` | `vscode://file` |
-| Cursor | `'cursor'` | `cursor://file` |
-| VS Code Insiders | `'vscode-insiders'` | `vscode-insiders://file` |
-| WebStorm | `'webstorm'` | `webstorm://open?file=` |
-| Zed | `'zed'` | `zed://file` |
+| `editor` | `'vscode'` \| `'vscode-insiders'` \| `'cursor'` \| `'webstorm'` \| `'zed'` | `'vscode'` | Editor opened by **Go to source** |
+| `projectRoot` | `string` | — | Absolute project root for source-map path resolution. Overrides `NEXT_PUBLIC_PROJECT_ROOT`. Required for Vite / TanStack Start / Rsbuild unless paths already resolve absolutely |
+| `modifier` | `'alt'` \| `'ctrl'` \| `'meta'` \| `'shift'` | `'alt'` | Modifier key: <kbd>⎇</kbd> Alt / <kbd>⌥</kbd> Option · <kbd>⌃</kbd> Ctrl · <kbd>⌘</kbd> Cmd · <kbd>⇧</kbd> Shift |
+| `enabled` | `boolean` | `true` in dev | Force enable or disable |
+| `highlightColor` | `string` | `'#ef4444'` | Overlay border color (any CSS color) |
+| `showPreview` | `boolean` | `true` | Props / hook-state preview panel on <kbd>⌥</kbd>/<kbd>⎇</kbd> + hover |
 
 ```tsx
-<Locator editor="cursor" />
+// Common setups
+<Locator />                                          // Next.js defaults
+<Locator editor="cursor" />                          // Go to source → Cursor
+<Locator projectRoot={__PROJECT_ROOT__} />             // Vite / Rsbuild
+<Locator modifier="meta" highlightColor="#3b82f6" />  // ⌘+click, blue overlay
+<Locator showPreview={false} />                        // No props panel
 ```
 
-> **Ask Cursor** and **Ask Claude** route through their own deeplinks and do not depend on the `editor` prop — that prop only controls which editor **Go to source** opens.
+> **Ask Cursor** / **Ask Claude** use their own deeplinks — independent of the `editor` prop, which only affects **Go to source**.
 
-## Configuration
+### TypeScript
 
-### Project root
-
-If source map paths don't resolve to absolute paths (Vite, monorepos, or custom setups), set the project root:
-
-```tsx
-<Locator projectRoot="/Users/you/projects/my-app" />
-```
-
-On Next.js you can instead use an env var:
-
-```bash
-# .env.local
-NEXT_PUBLIC_PROJECT_ROOT=/Users/you/projects/my-app
-```
-
-On Vite, inject it via `define` rather than hardcoding — see [Vite](#vite) above.
-
-### Custom modifier key
-
-```tsx
-<Locator modifier="ctrl" />    {/* Ctrl+Click */}
-<Locator modifier="meta" />    {/* Cmd+Click (Mac) / Win+Click */}
-<Locator modifier="shift" />   {/* Shift+Click */}
-```
-
-### Custom highlight color
-
-```tsx
-<Locator highlightColor="#3b82f6" />   {/* Blue */}
-<Locator highlightColor="#10b981" />   {/* Green */}
-```
-
-## How It Works
-
-1. Listens for **modifier key + mousemove** to find the DOM element under the cursor.
-2. Traverses the **React Fiber tree** via the `__reactFiber$` internal key.
-3. Resolves the original source in priority order:
-   - `data-locator-source` attribute (instant, if a compile-time injector is used)
-   - `_debugSource` (React 18, synchronous)
-   - `_debugStack` + source map (React 19, async with prefetch)
-4. **Prefetches source maps** on modifier keydown — external `.map` files and inline `data:` URIs alike.
-5. **Decodes mappings** via [`@jridgewell/trace-mapping`](https://github.com/jridgewell/trace-mapping) (`AnyMap`) to resolve the original file, line, and column. Handles both Turbopack's *sectioned* maps (Next.js) and the standard maps Vite/webpack emit.
-6. Displays the path in a tooltip and (optionally) a props/state preview panel.
-7. **Alt+Click** opens the four-action picker; **Alt+Right-click** opens the component hierarchy.
-
-## Props / State preview
-
-When hovering with the modifier key held, a preview panel shows:
-
-- **Props** — current prop values (excluding `children`)
-- **Hook state** — `useState`, `useReducer`, `useMemo`, `useRef`
-- **Render count** — how many times the component has been inspected
-
-Disable with:
-
-```tsx
-<Locator showPreview={false} />
-```
-
-## Requirements
-
-- **React** >= 18.0.0 (React 19 fully supported)
-- A bundler that emits source maps in dev: **Next.js** 13+ (Turbopack or webpack), **Vite**, or similar — Next.js is a peer dependency but optional
-- **Development mode** only (completely removed in production)
-
-## TypeScript
-
-```typescript
+```ts
 import type { LocatorProps, EditorProtocol, AgentTarget, FiberInspection } from 'click-to-agent';
 ```
 
-## Credits
-
-`click-to-agent` is a fork of [`nextjs-locator`](https://github.com/stkang9409/nextjs-locator) by **stkang9409**. Huge thanks for the original source-locator engine (React Fiber traversal, Turbopack source map decoding, multi-editor support). This fork focuses on the AI-coding-agent workflow.
+---
 
 ## License
 
-[MIT](./LICENSE) — original work © 2025 stkang9409, fork © 2026 stekovinbranturry.
+[MIT](./LICENSE) — original © stkang9409, fork © stekovinbranturry.
