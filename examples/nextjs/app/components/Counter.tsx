@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { CounterButton } from './CounterButton';
 
 interface CounterProps {
   label: string;
@@ -14,13 +15,13 @@ export function Counter({ label, initial = 0 }: CounterProps) {
     <div className="counter">
       <span className="counter-label">{label}</span>
       <div className="counter-controls">
-        <button onClick={() => setCount((c) => c - 1)} aria-label="decrement">
+        <CounterButton label="decrement" onClick={() => setCount((c) => c - 1)}>
           −
-        </button>
+        </CounterButton>
         <output className="counter-value">{count}</output>
-        <button onClick={() => setCount((c) => c + 1)} aria-label="increment">
+        <CounterButton label="increment" onClick={() => setCount((c) => c + 1)}>
           +
-        </button>
+        </CounterButton>
       </div>
     </div>
   );

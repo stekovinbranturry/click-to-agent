@@ -16,6 +16,8 @@ Hold the modifier key (Alt on Windows/Linux, Option on Mac) and interact with an
 - **Alt + Click** — open the action picker for that component
 - **Alt + Right-click** — show the full component ancestry, then pick a component to act on
 
+![Alt + Right-click shows the component ancestry — pick a parent component to act on](https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/right-click.gif)
+
 Every component exposes **four actions**:
 
 | Action | What it does |

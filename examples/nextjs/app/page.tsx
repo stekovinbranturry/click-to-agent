@@ -1,4 +1,4 @@
-import { Counter } from './components/Counter';
+import { DemoPanel } from './components/DemoPanel';
 import { FeatureCard } from './components/FeatureCard';
 
 export default function Home() {
@@ -40,8 +40,7 @@ export default function Home() {
       </section>
 
       <section className="counter-section">
-        <h2>Stateful component (try the props/state preview)</h2>
-        <Counter label="Demo counter" initial={3} />
+        <DemoPanel />
       </section>
     </main>
   );
