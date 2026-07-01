@@ -1,10 +1,12 @@
 # click-to-agent
 
+React component locator — Alt/Option+click to open source or send full context to Cursor & Claude. Next.js, Vite, TanStack Start, Rsbuild.
+
 **English** · [简体中文](./README.zh-CN.md)
 
 **<kbd>⌥</kbd> Option / <kbd>⎇</kbd> Alt + click any React component → jump to source, or hand it to your AI agent with full context.**
 
-Dev-only · React 18 & 19 · No browser extension · No Babel plugin.
+React 18 & 19 · No browser extension · No Babel plugin.
 
 ![click-to-agent demo](https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/demo.gif)
 
@@ -40,20 +42,20 @@ Hold <kbd>⌥</kbd> **Option** (Mac) or <kbd>⎇</kbd> **Alt** (Win/Linux) and i
 - **Zero friction** — point at UI, don't hunt through the component tree
 - **Agent-ready context** — Cursor / Claude get props, state, DOM, and CSS in one shot
 - **Works with your stack** — Next.js zero-config; Vite / TanStack Start / Rsbuild need one `projectRoot` prop
-- **Dev-only** — zero impact on production builds
+- **Zero production impact** — tree-shaken from production builds
 
 ---
 
 ## 2. Supported frameworks
 
-| | Framework | Setup | Example |
-|---|-----------|-------|---------|
-| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/nextjs.svg" width="22" height="22" alt="Next.js" /> | **Next.js** (Turbopack / webpack) | Zero-config | [`examples/nextjs`](./examples/nextjs) |
-| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/vite.svg" width="22" height="22" alt="Vite" /> | **Vite** + React | `projectRoot` via `define` | [`examples/vite`](./examples/vite) |
-| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/tanstack.png" width="22" height="22" alt="TanStack" /> | **TanStack Start** | Same as Vite (`define` + client boundary) | [`examples/tanstack`](./examples/tanstack) |
-| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/rsbuild.svg" width="22" height="22" alt="Rsbuild" /> | **Rsbuild / Rspack** + React | `projectRoot` via `source.define` | [`examples/rsbuild`](./examples/rsbuild) |
+| | Framework | Example |
+|---|-----------|---------|
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/nextjs.svg" width="22" height="22" alt="Next.js" /> | **Next.js** (Turbopack / webpack) | [`examples/nextjs`](./examples/nextjs) |
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/vite.svg" width="22" height="22" alt="Vite" /> | **Vite** + React | [`examples/vite`](./examples/vite) |
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/tanstack.png" width="22" height="22" alt="TanStack" /> | **TanStack Start** | [`examples/tanstack`](./examples/tanstack) |
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/rsbuild.svg" width="22" height="22" alt="Rsbuild" /> | **Rsbuild / Rspack** + React | [`examples/rsbuild`](./examples/rsbuild) |
 
-React ≥ 18 · dev-mode source maps · development only.
+React ≥ 18 · source maps enabled.
 
 ---
 
@@ -62,12 +64,12 @@ React ≥ 18 · dev-mode source maps · development only.
 ### Install
 
 ```bash
-pnpm add click-to-agent
-# npm install click-to-agent
-# yarn add click-to-agent
+pnpm add -D click-to-agent
+npm install -D click-to-agent
+yarn add -D click-to-agent
 ```
 
-### Next.js — zero-config
+### <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/nextjs.svg" width="22" height="22" valign="middle" alt="Next.js" /> Next.js
 
 ```tsx
 // app/layout.tsx  (or pages/_app.tsx)
@@ -92,7 +94,7 @@ Optional env var instead of `projectRoot` prop:
 NEXT_PUBLIC_PROJECT_ROOT=/absolute/path/to/your/app
 ```
 
-### Vite — one `define`
+### <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/vite.svg" width="22" height="22" valign="middle" alt="Vite" /> Vite
 
 ```ts
 // vite.config.ts
@@ -116,7 +118,7 @@ createRoot(document.getElementById('root')!).render(
 );
 ```
 
-### TanStack Start — Vite `define` + client boundary
+### <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/tanstack.png" width="22" height="22" valign="middle" alt="TanStack" /> TanStack Start
 
 TanStack Start uses SSR; wrap `<Locator>` in a `'use client'` component:
 
@@ -142,7 +144,7 @@ export function LocatorDev() {
 <LocatorDev />
 ```
 
-### Rsbuild / Rspack — `source.define`
+### <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/rsbuild.svg" width="22" height="22" valign="middle" alt="Rsbuild" /> Rsbuild / Rspack
 
 ```ts
 // rsbuild.config.ts
@@ -178,7 +180,7 @@ root.render(
 | `editor` | `EditorProtocol[]` | `['cursor', 'vscode']` | Editors for **Go to source** — one menu item per entry |
 | `projectRoot` | `string` | — | Absolute project root for source-map path resolution. Overrides `NEXT_PUBLIC_PROJECT_ROOT`. Required for Vite / TanStack Start / Rsbuild unless paths already resolve absolutely |
 | `modifier` | `'alt'` \| `'ctrl'` \| `'meta'` \| `'shift'` | `'alt'` | Modifier key: <kbd>⎇</kbd> Alt / <kbd>⌥</kbd> Option · <kbd>⌃</kbd> Ctrl · <kbd>⌘</kbd> Cmd · <kbd>⇧</kbd> Shift |
-| `enabled` | `boolean` | `true` in dev | Force enable or disable |
+| `enabled` | `boolean` | `true` | Force enable or disable |
 | `highlightColor` | `string` | `'#ef4444'` | Overlay border color (any CSS color) |
 | `showPreview` | `boolean` | `true` | Props / hook-state preview panel on <kbd>⌥</kbd>/<kbd>⎇</kbd> + hover |
 

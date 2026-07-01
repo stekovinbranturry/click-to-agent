@@ -1,10 +1,12 @@
 # click-to-agent
 
+React 组件定位器 — Alt/Option+点击跳转源码，或将完整上下文交给 Cursor & Claude。支持 Next.js、Vite、TanStack Start、Rsbuild。
+
 [English](./README.md) · **简体中文**
 
 **按住 <kbd>⌥</kbd> Option / <kbd>⎇</kbd> Alt 点击任意 React 组件 → 跳转源码，或将完整上下文交给 AI Agent。**
 
-仅开发环境 · 支持 React 18 & 19 · 无需浏览器插件 · 无需 Babel 插件
+支持 React 18 & 19 · 无需浏览器插件 · 无需 Babel 插件
 
 ![click-to-agent 演示](https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/demo.gif)
 
@@ -40,20 +42,20 @@
 - **零成本上手** — 指着 UI 就能定位，不用在组件树里翻找
 - **Agent 就绪** — Cursor / Claude 一次拿到 props、state、DOM、CSS
 - **适配你的技术栈** — Next.js 零配置；Vite / TanStack Start / Rsbuild 只需传 `projectRoot`
-- **仅开发环境** — 不影响生产构建
+- **不影响生产构建** — 生产包会被摇树优化掉
 
 ---
 
 ## 2. 支持的框架
 
-| | 框架 | 接入 | 示例 |
-|---|------|------|------|
-| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/nextjs.svg" width="22" height="22" alt="Next.js" /> | **Next.js**（Turbopack / webpack） | 零配置 | [`examples/nextjs`](./examples/nextjs) |
-| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/vite.svg" width="22" height="22" alt="Vite" /> | **Vite** + React | `define` 注入 `projectRoot` | [`examples/vite`](./examples/vite) |
-| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/tanstack.png" width="22" height="22" alt="TanStack" /> | **TanStack Start** | 同 Vite（`define` + Client 边界） | [`examples/tanstack`](./examples/tanstack) |
-| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/rsbuild.svg" width="22" height="22" alt="Rsbuild" /> | **Rsbuild / Rspack** + React | `source.define` 注入 `projectRoot` | [`examples/rsbuild`](./examples/rsbuild) |
+| | 框架 | 示例 |
+|---|------|------|
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/nextjs.svg" width="22" height="22" alt="Next.js" /> | **Next.js**（Turbopack / webpack） | [`examples/nextjs`](./examples/nextjs) |
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/vite.svg" width="22" height="22" alt="Vite" /> | **Vite** + React | [`examples/vite`](./examples/vite) |
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/tanstack.png" width="22" height="22" alt="TanStack" /> | **TanStack Start** | [`examples/tanstack`](./examples/tanstack) |
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/rsbuild.svg" width="22" height="22" alt="Rsbuild" /> | **Rsbuild / Rspack** + React | [`examples/rsbuild`](./examples/rsbuild) |
 
-React ≥ 18 · 开发模式 Source Map · 仅开发环境使用。
+React ≥ 18 · 需开启 Source Map。
 
 ---
 
@@ -62,12 +64,12 @@ React ≥ 18 · 开发模式 Source Map · 仅开发环境使用。
 ### 安装
 
 ```bash
-pnpm add click-to-agent
-# npm install click-to-agent
-# yarn add click-to-agent
+pnpm add -D click-to-agent
+npm install -D click-to-agent
+yarn add -D click-to-agent
 ```
 
-### Next.js — 零配置
+### <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/nextjs.svg" width="22" height="22" valign="middle" alt="Next.js" /> Next.js
 
 ```tsx
 // app/layout.tsx（或 pages/_app.tsx）
@@ -92,7 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 NEXT_PUBLIC_PROJECT_ROOT=/absolute/path/to/your/app
 ```
 
-### Vite — 一行 `define`
+### <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/vite.svg" width="22" height="22" valign="middle" alt="Vite" /> Vite
 
 ```ts
 // vite.config.ts
@@ -116,7 +118,7 @@ createRoot(document.getElementById('root')!).render(
 );
 ```
 
-### TanStack Start — Vite `define` + Client 边界
+### <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/tanstack.png" width="22" height="22" valign="middle" alt="TanStack" /> TanStack Start
 
 TanStack Start 使用 SSR，需将 `<Locator>` 包在 `'use client'` 组件中：
 
@@ -142,7 +144,7 @@ export function LocatorDev() {
 <LocatorDev />
 ```
 
-### Rsbuild / Rspack — `source.define`
+### <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/rsbuild.svg" width="22" height="22" valign="middle" alt="Rsbuild" /> Rsbuild / Rspack
 
 ```ts
 // rsbuild.config.ts
@@ -178,7 +180,7 @@ root.render(
 | `editor` | `EditorProtocol[]` | `['cursor', 'vscode']` | **Go to source** 目标编辑器，每个条目对应一个菜单项 |
 | `projectRoot` | `string` | — | 项目根目录绝对路径，用于 Source Map 路径解析。会覆盖 `NEXT_PUBLIC_PROJECT_ROOT`。Vite / TanStack Start / Rsbuild 通常需要（除非路径本身已是绝对路径） |
 | `modifier` | `'alt'` \| `'ctrl'` \| `'meta'` \| `'shift'` | `'alt'` | 触发修饰键：<kbd>⎇</kbd> Alt / <kbd>⌥</kbd> Option · <kbd>⌃</kbd> Ctrl · <kbd>⌘</kbd> Cmd · <kbd>⇧</kbd> Shift |
-| `enabled` | `boolean` | 开发环境为 `true` | 强制启用或禁用 |
+| `enabled` | `boolean` | `true` | 强制启用或禁用 |
 | `highlightColor` | `string` | `'#ef4444'` | 高亮边框颜色（任意 CSS 颜色值） |
 | `showPreview` | `boolean` | `true` | <kbd>⌥</kbd>/<kbd>⎇</kbd> + 悬停时是否显示 props / Hook 状态预览面板 |
 

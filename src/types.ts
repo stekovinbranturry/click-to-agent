@@ -13,7 +13,7 @@ export interface LocatorProps {
   projectRoot?: string;
   /** Keyboard modifier to activate locator. Default: 'alt' */
   modifier?: 'alt' | 'ctrl' | 'meta' | 'shift';
-  /** Whether the locator is enabled. Default: true in development */
+  /** Whether the locator is enabled. Default: `true` */
   enabled?: boolean;
   /** Overlay border color (CSS color). Default: '#ef4444' (red) */
   highlightColor?: string;
