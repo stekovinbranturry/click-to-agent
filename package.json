@@ -1,6 +1,6 @@
 {
   "name": "click-to-agent",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "description": "Alt+Click any React component to jump to source (Cursor, VS Code) or send props, state & DOM to AI agents. Works with Next.js, Vite, TanStack Start & Rsbuild — no browser extension.",
   "keywords": [
     "react",

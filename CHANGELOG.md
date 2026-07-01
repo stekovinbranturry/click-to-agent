@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0
+
+### Minor Changes
+
+- **`editor` prop is now an array** — default `['cursor', 'vscode']`, one **Open in …** menu action per editor for team-friendly setups.
+- **Broader bundler support** — Vite, TanStack Start, and Rsbuild/Rspack via `projectRoot`; standard & sectioned source maps via `@jridgewell/trace-mapping`.
+
+### Patch Changes
+
+- **Alt+Right-click hierarchy** — filter framework internals, viewport-safe menu positioning, React 19 ancestry fallback.
+- **Rsbuild / webpack paths** — normalize prefix-less absolute paths so **Go to source** opens the correct file.
+
 ## 0.0.1
 
 ### Patch Changes
