@@ -4,7 +4,7 @@
 
 Zero-config for **Next.js** (Turbopack & webpack), and works with **Vite** with one extra prop. React 18 & 19. No Babel plugin, no browser extension.
 
-![click-to-agent demo](docs/demo.gif)
+![click-to-agent demo](https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/demo.gif)
 
 > Fork of the excellent [`nextjs-locator`](https://github.com/stkang9409/nextjs-locator) by stkang9409 (MIT). `click-to-agent` keeps the source-locator core and adds first-class **"send this component to an AI coding agent"** actions (Cursor / Claude Code / clipboard).
 
@@ -25,7 +25,7 @@ Every component exposes **four actions**:
 | ◎ **Ask Claude** | Opens **Claude Code** with a rich, pre-filled prompt about the component |
 | ⧉ **Copy prompt** | Copies the full component prompt to your clipboard |
 
-![The four-action picker, with the component highlighted and its props/state preview](docs/action-picker.png)
+![The four-action picker, with the component highlighted and its props/state preview](https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/action-picker.png)
 
 For **Ask Cursor** / **Ask Claude**, a small modal asks for your instruction (e.g. *"make this button full-width and blue"*). The prompt handed to the agent includes:
 
