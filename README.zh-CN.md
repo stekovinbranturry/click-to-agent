@@ -26,7 +26,7 @@
 
 | | 动作 | 说明 |
 |---|------|------|
-| ↗ | **Go to source** | 在编辑器中打开对应文件与行号 |
+| ↗ | **Open in …** | 在配置的每个编辑器中打开对应文件（见 `editor` prop） |
 | ▹ | **Ask Cursor** | 通过 Deeplink 打开 Cursor，并预填完整 Prompt |
 | ◎ | **Ask Claude** | 通过 Deeplink 打开 Claude Code，上下文相同 |
 | ⧉ | **Copy prompt** | 将完整 Prompt 复制到剪贴板 |
@@ -48,7 +48,7 @@
 
 | | 框架 | 接入 | 示例 |
 |---|------|------|------|
-| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/nextjs.svg" height="22" alt="Next.js" /> | **Next.js**（Turbopack / webpack） | 零配置 | [`examples/nextjs`](./examples/nextjs) |
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/nextjs.svg" width="22" height="22" alt="Next.js" /> | **Next.js**（Turbopack / webpack） | 零配置 | [`examples/nextjs`](./examples/nextjs) |
 | <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/vite.svg" width="22" height="22" alt="Vite" /> | **Vite** + React | `define` 注入 `projectRoot` | [`examples/vite`](./examples/vite) |
 | <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/tanstack.png" width="22" height="22" alt="TanStack" /> | **TanStack Start** | 同 Vite（`define` + Client 边界） | [`examples/tanstack`](./examples/tanstack) |
 | <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/rsbuild.svg" width="22" height="22" alt="Rsbuild" /> | **Rsbuild / Rspack** + React | `source.define` 注入 `projectRoot` | [`examples/rsbuild`](./examples/rsbuild) |
@@ -78,7 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html>
       <body>
         {children}
-        <Locator editor="cursor" />
+        <Locator />
       </body>
     </html>
   );
@@ -111,7 +111,7 @@ declare const __PROJECT_ROOT__: string;
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
-    <Locator enabled={import.meta.env.DEV} editor="cursor" projectRoot={__PROJECT_ROOT__} />
+    <Locator enabled={import.meta.env.DEV} projectRoot={__PROJECT_ROOT__} />
   </StrictMode>,
 );
 ```
@@ -133,7 +133,7 @@ declare const __PROJECT_ROOT__: string;
 
 export function LocatorDev() {
   if (!import.meta.env.DEV) return null;
-  return <Locator editor="cursor" projectRoot={__PROJECT_ROOT__} />;
+  return <Locator projectRoot={__PROJECT_ROOT__} />;
 }
 ```
 
@@ -163,7 +163,7 @@ root.render(
   <StrictMode>
     <App />
     {import.meta.env.DEV && (
-      <Locator editor="cursor" projectRoot={__PROJECT_ROOT__} />
+      <Locator projectRoot={__PROJECT_ROOT__} />
     )}
   </StrictMode>,
 );
@@ -175,7 +175,7 @@ root.render(
 
 | Prop | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `editor` | `'vscode'` \| `'vscode-insiders'` \| `'cursor'` \| `'webstorm'` \| `'zed'` | `'vscode'` | **Go to source** 打开的编辑器 |
+| `editor` | `EditorProtocol[]` | `['cursor', 'vscode']` | **Go to source** 目标编辑器，每个条目对应一个菜单项 |
 | `projectRoot` | `string` | — | 项目根目录绝对路径，用于 Source Map 路径解析。会覆盖 `NEXT_PUBLIC_PROJECT_ROOT`。Vite / TanStack Start / Rsbuild 通常需要（除非路径本身已是绝对路径） |
 | `modifier` | `'alt'` \| `'ctrl'` \| `'meta'` \| `'shift'` | `'alt'` | 触发修饰键：<kbd>⎇</kbd> Alt / <kbd>⌥</kbd> Option · <kbd>⌃</kbd> Ctrl · <kbd>⌘</kbd> Cmd · <kbd>⇧</kbd> Shift |
 | `enabled` | `boolean` | 开发环境为 `true` | 强制启用或禁用 |
@@ -184,14 +184,15 @@ root.render(
 
 ```tsx
 // 常见配置
-<Locator />                                          // Next.js 默认
-<Locator editor="cursor" />                          // Go to source → Cursor
-<Locator projectRoot={__PROJECT_ROOT__} />             // Vite / Rsbuild
-<Locator modifier="meta" highlightColor="#3b82f6" />  // ⌘+点击，蓝色高亮
-<Locator showPreview={false} />                        // 关闭 props 预览
+<Locator />                                              // 默认：Cursor + VS Code
+<Locator editor={['cursor']} />                            // 仅 Cursor
+<Locator editor={['cursor', 'vscode', 'zed']} />           // 团队混用编辑器
+<Locator projectRoot={__PROJECT_ROOT__} />                 // Vite / Rsbuild
+<Locator modifier="meta" highlightColor="#3b82f6" />      // ⌘+点击，蓝色高亮
+<Locator showPreview={false} />                            // 关闭 props 预览
 ```
 
-> **Ask Cursor** / **Ask Claude** 使用各自的 Deeplink，与 `editor` prop 无关；`editor` 仅影响 **Go to source**。
+> **Ask Cursor** / **Ask Claude** 使用各自的 Deeplink，与 `editor` prop 无关。
 
 ### TypeScript
 

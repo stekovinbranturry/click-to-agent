@@ -16,8 +16,8 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
-        {/* Dev-only. Try editor="cursor" to make "Go to source" open Cursor. */}
-        <Locator editor="cursor" />
+        {/* Dev-only. Default editors: Cursor + VS Code. Pass editor={['zed']} etc. to customize. */}
+        <Locator />
       </body>
     </html>
   );

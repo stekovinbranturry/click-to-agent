@@ -12,7 +12,7 @@ if (rootEl) {
     <React.StrictMode>
       <App />
       {import.meta.env.DEV && (
-        <Locator editor="cursor" projectRoot={__PROJECT_ROOT__} />
+        <Locator projectRoot={__PROJECT_ROOT__} />
       )}
     </React.StrictMode>,
   );

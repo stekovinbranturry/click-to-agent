@@ -7,8 +7,8 @@ export type EditorProtocol =
   | 'zed';
 
 export interface LocatorProps {
-  /** Editor to open files in. Default: 'vscode' */
-  editor?: EditorProtocol;
+  /** Editors for **Go to source** — one menu action each. Default: `['cursor', 'vscode']`. */
+  editor?: EditorProtocol[];
   /** Absolute project root path. Overrides NEXT_PUBLIC_PROJECT_ROOT env var */
   projectRoot?: string;
   /** Keyboard modifier to activate locator. Default: 'alt' */

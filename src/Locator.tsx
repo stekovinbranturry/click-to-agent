@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import type { LocatorProps, ResolvedSource, ContextMenuItem } from './types';
+import type { LocatorProps, EditorProtocol, ResolvedSource, ContextMenuItem } from './types';
 import {
   getFiberFromElement,
   findNearestComponentFiber,
@@ -20,7 +20,7 @@ import {
   resolveEditorFilePath,
   type SourceMapCache,
 } from './lib/source-map';
-import { buildEditorUrl } from './lib/editor';
+import { buildEditorUrl, EDITOR_LABELS, DEFAULT_EDITORS } from './lib/editor';
 import {
   createOverlay,
   positionOverlay,
@@ -110,8 +110,8 @@ async function resolveComponentSource(
  * - Alt+Hover: highlights component with name and source file path
  * - Alt+Click: opens the per-component action picker
  * - Alt+Right-click: shows the component hierarchy menu
- * - Each component exposes four actions:
- *     - "↗ Go to source": opens the source file in your editor
+ * - Each component exposes actions:
+ *     - "↗ Open in …": one per configured editor (Go to source)
  *     - "▹ Ask Cursor":    opens Cursor with a rich component-context prompt
  *     - "◎ Ask Claude":    opens Claude Code with a rich component-context prompt
  *     - "⧉ Copy prompt":   copies the component-context prompt to the clipboard
@@ -128,7 +128,7 @@ export function Locator(props: LocatorProps = {}) {
 }
 
 function LocatorImpl({
-  editor = 'vscode',
+  editor,
   projectRoot,
   modifier = 'alt',
   enabled,
@@ -161,8 +161,10 @@ function LocatorImpl({
       line: item.line,
     });
 
+    const editors = editor?.length ? [...new Set(editor)] : DEFAULT_EDITORS;
+
     /**
-     * Build the four-action set (Go to source / Ask Cursor / Ask Claude /
+     * Build the action set (Open in editor × N / Ask Cursor / Ask Claude /
      * Copy prompt) shared by Alt+Click and Alt+Right-click. `resolveFor`
      * yields the already-resolved source for the chosen item (or null →
      * resolve lazily); `element` is the DOM node the menu was opened from.
@@ -171,33 +173,26 @@ function LocatorImpl({
       resolveFor: (item: ContextMenuItem) => ResolvedSource | null,
       element: HTMLElement,
     ): MenuAction[] => {
-      const goToSource = (item: ContextMenuItem) => {
+      const openInEditor = (item: ContextMenuItem, targetEditor: EditorProtocol) => {
         const resolved = resolveFor(item);
-        if (resolved) {
+        const open = (r: ResolvedSource) => {
           window.open(
             buildEditorUrl(
-              editor,
-              resolveEditorFilePath(resolved.filePath, projectRoot),
-              resolved.originalLine,
-              resolved.originalColumn,
+              targetEditor,
+              resolveEditorFilePath(r.filePath, projectRoot),
+              r.originalLine,
+              r.originalColumn,
             ),
             '_self',
           );
+        };
+        if (resolved) {
+          open(resolved);
           return;
         }
         resolveComponentSource(item.fiber, sourceMapCache, projectRoot)
           .then((r) => {
-            if (r) {
-              window.open(
-                buildEditorUrl(
-                  editor,
-                  resolveEditorFilePath(r.filePath, projectRoot),
-                  r.originalLine,
-                  r.originalColumn,
-                ),
-                '_self',
-              );
-            }
+            if (r) open(r);
           })
           .catch((err) =>
             console.warn('[click-to-agent] Source map error:', err),
@@ -234,14 +229,16 @@ function LocatorImpl({
         }
       };
 
+      const editorActions: MenuAction[] = editors.map((targetEditor) => ({
+        icon: '↗',
+        label: `Open in ${EDITOR_LABELS[targetEditor]}`,
+        color: '#cbd5e1',
+        hoverBg: 'rgba(255,255,255,0.08)',
+        run: (item) => openInEditor(item, targetEditor),
+      }));
+
       return [
-        {
-          icon: '↗',
-          label: 'Go to source',
-          color: '#cbd5e1',
-          hoverBg: 'rgba(255,255,255,0.08)',
-          run: goToSource,
-        },
+        ...editorActions,
         {
           icon: '▹',
           label: 'Ask Cursor',

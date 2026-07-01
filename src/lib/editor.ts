@@ -8,6 +8,16 @@ const EDITOR_PROTOCOLS: Record<EditorProtocol, string> = {
   zed: 'zed://file',
 };
 
+export const EDITOR_LABELS: Record<EditorProtocol, string> = {
+  vscode: 'VS Code',
+  'vscode-insiders': 'VS Code Insiders',
+  cursor: 'Cursor',
+  webstorm: 'WebStorm',
+  zed: 'Zed',
+};
+
+export const DEFAULT_EDITORS: EditorProtocol[] = ['cursor', 'vscode'];
+
 /**
  * Build a URL that opens the given file at line:column in the target editor.
  *

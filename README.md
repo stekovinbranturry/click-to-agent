@@ -26,7 +26,7 @@ Hold <kbd>⌥</kbd> **Option** (Mac) or <kbd>⎇</kbd> **Alt** (Win/Linux) and i
 
 | | Action | What happens |
 |---|--------|--------------|
-| ↗ | **Go to source** | Open the file at the exact line in your editor |
+| ↗ | **Open in …** | Open the file in each configured editor (see `editor` prop) |
 | ▹ | **Ask Cursor** | Deeplink to Cursor with a rich, pre-filled prompt |
 | ◎ | **Ask Claude** | Deeplink to Claude Code with the same context |
 | ⧉ | **Copy prompt** | Copy the full prompt to clipboard |
@@ -48,7 +48,7 @@ Hold <kbd>⌥</kbd> **Option** (Mac) or <kbd>⎇</kbd> **Alt** (Win/Linux) and i
 
 | | Framework | Setup | Example |
 |---|-----------|-------|---------|
-| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/nextjs.svg" height="22" alt="Next.js" /> | **Next.js** (Turbopack / webpack) | Zero-config | [`examples/nextjs`](./examples/nextjs) |
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/nextjs.svg" width="22" height="22" alt="Next.js" /> | **Next.js** (Turbopack / webpack) | Zero-config | [`examples/nextjs`](./examples/nextjs) |
 | <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/vite.svg" width="22" height="22" alt="Vite" /> | **Vite** + React | `projectRoot` via `define` | [`examples/vite`](./examples/vite) |
 | <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/tanstack.png" width="22" height="22" alt="TanStack" /> | **TanStack Start** | Same as Vite (`define` + client boundary) | [`examples/tanstack`](./examples/tanstack) |
 | <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/rsbuild.svg" width="22" height="22" alt="Rsbuild" /> | **Rsbuild / Rspack** + React | `projectRoot` via `source.define` | [`examples/rsbuild`](./examples/rsbuild) |
@@ -78,7 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html>
       <body>
         {children}
-        <Locator editor="cursor" />
+        <Locator />
       </body>
     </html>
   );
@@ -111,7 +111,7 @@ declare const __PROJECT_ROOT__: string;
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
-    <Locator enabled={import.meta.env.DEV} editor="cursor" projectRoot={__PROJECT_ROOT__} />
+    <Locator enabled={import.meta.env.DEV} projectRoot={__PROJECT_ROOT__} />
   </StrictMode>,
 );
 ```
@@ -133,7 +133,7 @@ declare const __PROJECT_ROOT__: string;
 
 export function LocatorDev() {
   if (!import.meta.env.DEV) return null;
-  return <Locator editor="cursor" projectRoot={__PROJECT_ROOT__} />;
+  return <Locator projectRoot={__PROJECT_ROOT__} />;
 }
 ```
 
@@ -163,7 +163,7 @@ root.render(
   <StrictMode>
     <App />
     {import.meta.env.DEV && (
-      <Locator editor="cursor" projectRoot={__PROJECT_ROOT__} />
+      <Locator projectRoot={__PROJECT_ROOT__} />
     )}
   </StrictMode>,
 );
@@ -175,7 +175,7 @@ root.render(
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `editor` | `'vscode'` \| `'vscode-insiders'` \| `'cursor'` \| `'webstorm'` \| `'zed'` | `'vscode'` | Editor opened by **Go to source** |
+| `editor` | `EditorProtocol[]` | `['cursor', 'vscode']` | Editors for **Go to source** — one menu item per entry |
 | `projectRoot` | `string` | — | Absolute project root for source-map path resolution. Overrides `NEXT_PUBLIC_PROJECT_ROOT`. Required for Vite / TanStack Start / Rsbuild unless paths already resolve absolutely |
 | `modifier` | `'alt'` \| `'ctrl'` \| `'meta'` \| `'shift'` | `'alt'` | Modifier key: <kbd>⎇</kbd> Alt / <kbd>⌥</kbd> Option · <kbd>⌃</kbd> Ctrl · <kbd>⌘</kbd> Cmd · <kbd>⇧</kbd> Shift |
 | `enabled` | `boolean` | `true` in dev | Force enable or disable |
@@ -184,14 +184,15 @@ root.render(
 
 ```tsx
 // Common setups
-<Locator />                                          // Next.js defaults
-<Locator editor="cursor" />                          // Go to source → Cursor
-<Locator projectRoot={__PROJECT_ROOT__} />             // Vite / Rsbuild
-<Locator modifier="meta" highlightColor="#3b82f6" />  // ⌘+click, blue overlay
-<Locator showPreview={false} />                        // No props panel
+<Locator />                                              // default: Cursor + VS Code
+<Locator editor={['cursor']} />                            // Cursor only
+<Locator editor={['cursor', 'vscode', 'zed']} />           // team-friendly
+<Locator projectRoot={__PROJECT_ROOT__} />                 // Vite / Rsbuild
+<Locator modifier="meta" highlightColor="#3b82f6" />      // ⌘+click, blue overlay
+<Locator showPreview={false} />                            // No props panel
 ```
 
-> **Ask Cursor** / **Ask Claude** use their own deeplinks — independent of the `editor` prop, which only affects **Go to source**.
+> **Ask Cursor** / **Ask Claude** use their own deeplinks — independent of the `editor` prop.
 
 ### TypeScript
 
