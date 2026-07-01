@@ -48,10 +48,10 @@
 
 | | 框架 | 接入 | 示例 |
 |---|------|------|------|
-| <img src="https://cdn.simpleicons.org/nextdotjs/000000" width="22" height="22" alt="" /> | **Next.js**（Turbopack / webpack） | 零配置 | [`examples/nextjs`](./examples/nextjs) |
-| <img src="https://cdn.simpleicons.org/vite/646CFF" width="22" height="22" alt="" /> | **Vite** + React | `define` 注入 `projectRoot` | [`examples/vite`](./examples/vite) |
-| <img src="https://cdn.simpleicons.org/tanstack/0055FF" width="22" height="22" alt="" /> | **TanStack Start** | 同 Vite（`define` + Client 边界） | [`examples/tanstack`](./examples/tanstack) |
-| <img src="https://cdn.simpleicons.org/rspack/8A8A8A" width="22" height="22" alt="" /> | **Rsbuild / Rspack** + React | `source.define` 注入 `projectRoot` | [`examples/rsbuild`](./examples/rsbuild) |
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/nextjs.svg" height="22" alt="Next.js" /> | **Next.js**（Turbopack / webpack） | 零配置 | [`examples/nextjs`](./examples/nextjs) |
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/vite.svg" width="22" height="22" alt="Vite" /> | **Vite** + React | `define` 注入 `projectRoot` | [`examples/vite`](./examples/vite) |
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/tanstack.png" width="22" height="22" alt="TanStack" /> | **TanStack Start** | 同 Vite（`define` + Client 边界） | [`examples/tanstack`](./examples/tanstack) |
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/rsbuild.svg" width="22" height="22" alt="Rsbuild" /> | **Rsbuild / Rspack** + React | `source.define` 注入 `projectRoot` | [`examples/rsbuild`](./examples/rsbuild) |
 
 React ≥ 18 · 开发模式 Source Map · 仅开发环境使用。
 

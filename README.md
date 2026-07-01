@@ -48,10 +48,10 @@ Hold <kbd>⌥</kbd> **Option** (Mac) or <kbd>⎇</kbd> **Alt** (Win/Linux) and i
 
 | | Framework | Setup | Example |
 |---|-----------|-------|---------|
-| <img src="https://cdn.simpleicons.org/nextdotjs/000000" width="22" height="22" alt="" /> | **Next.js** (Turbopack / webpack) | Zero-config | [`examples/nextjs`](./examples/nextjs) |
-| <img src="https://cdn.simpleicons.org/vite/646CFF" width="22" height="22" alt="" /> | **Vite** + React | `projectRoot` via `define` | [`examples/vite`](./examples/vite) |
-| <img src="https://cdn.simpleicons.org/tanstack/0055FF" width="22" height="22" alt="" /> | **TanStack Start** | Same as Vite (`define` + client boundary) | [`examples/tanstack`](./examples/tanstack) |
-| <img src="https://cdn.simpleicons.org/rspack/8A8A8A" width="22" height="22" alt="" /> | **Rsbuild / Rspack** + React | `projectRoot` via `source.define` | [`examples/rsbuild`](./examples/rsbuild) |
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/nextjs.svg" height="22" alt="Next.js" /> | **Next.js** (Turbopack / webpack) | Zero-config | [`examples/nextjs`](./examples/nextjs) |
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/vite.svg" width="22" height="22" alt="Vite" /> | **Vite** + React | `projectRoot` via `define` | [`examples/vite`](./examples/vite) |
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/tanstack.png" width="22" height="22" alt="TanStack" /> | **TanStack Start** | Same as Vite (`define` + client boundary) | [`examples/tanstack`](./examples/tanstack) |
+| <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/rsbuild.svg" width="22" height="22" alt="Rsbuild" /> | **Rsbuild / Rspack** + React | `projectRoot` via `source.define` | [`examples/rsbuild`](./examples/rsbuild) |
 
 React ≥ 18 · dev-mode source maps · development only.
 
