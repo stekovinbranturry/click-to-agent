@@ -420,6 +420,9 @@ function LocatorImpl({
 
       e.preventDefault();
       e.stopPropagation();
+      // Cancel any pending hover-preview so its debounce can't re-open the
+      // panel on top of the menu we're about to show.
+      if (inspectDebounceTimer) clearTimeout(inspectDebounceTimer);
       if (previewPanel) hidePreviewPanel(previewPanel);
 
       const target = document.elementFromPoint(
@@ -449,9 +452,12 @@ function LocatorImpl({
       // Guard: user may have released modifier key while resolving
       if (!isModifierHeld) return;
 
-      // Filter out node_modules (React 19 + Turbopack: filePath is the resolved source path)
+      // Keep only components that resolve to user source. This drops framework
+      // internals (e.g. Next.js SegmentViewNode / *Boundary) that either fail to
+      // resolve or live in node_modules, leaving a clean user-component hierarchy.
       const userEntries = resolvedEntries.filter(
-        ({ resolved }) => !resolved?.filePath.includes('node_modules'),
+        ({ resolved }) =>
+          resolved != null && !resolved.filePath.includes('node_modules'),
       );
 
       if (userEntries.length === 0) return;

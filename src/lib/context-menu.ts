@@ -63,6 +63,15 @@ export function showContextMenu(
     (container as any)._keydownHandler = handler;
   }
 
+  // Clamp the menu inside the viewport. Re-run whenever the content changes
+  // (list ↔ taller action picker) so the menu is never cut off at an edge.
+  function reposition(): void {
+    const menuWidth = container.offsetWidth || 340;
+    const menuHeight = container.offsetHeight || 0;
+    container.style.left = `${Math.max(8, Math.min(x, window.innerWidth - menuWidth - 8))}px`;
+    container.style.top = `${Math.max(8, Math.min(y, window.innerHeight - menuHeight - 8))}px`;
+  }
+
   // ── Stage 1: Component list ───────────────────────────────────────────────
   function renderList() {
     container.innerHTML = '';
@@ -136,6 +145,7 @@ export function showContextMenu(
       }
     });
 
+    reposition();
     container.focus();
   }
 
@@ -261,21 +271,18 @@ export function showContextMenu(
       }
     });
 
+    reposition();
     container.focus();
   }
 
-  // Render first stage (or skip to action picker if skipToAction is provided)
+  // Render first stage (or skip to action picker if skipToAction is provided).
+  // Each render calls reposition() itself, so the menu is clamped to the
+  // viewport on the initial paint and on every list ↔ action-picker switch.
   if (skipToAction) {
     renderActionPicker(skipToAction, true);
   } else {
     renderList();
   }
-
-  // Position within viewport
-  const menuWidth = container.offsetWidth || 340;
-  const menuHeight = container.offsetHeight || items.length * 36;
-  container.style.left = `${Math.min(x, window.innerWidth - menuWidth - 8)}px`;
-  container.style.top = `${Math.min(y, window.innerHeight - menuHeight - 8)}px`;
 }
 
 /** Update a single context menu item's file path display */
