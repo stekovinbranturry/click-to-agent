@@ -1,9 +1,11 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
+import { Locator } from 'click-to-agent'
 import Footer from '../components/Footer'
 import Header from '../components/Header'
-import { LocatorDev } from '../components/LocatorDev'
+
+declare const __PROJECT_ROOT__: string
 
 import appCss from '../styles.css?url'
 
@@ -55,7 +57,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             },
           ]}
         />
-        <LocatorDev />
+        <Locator projectRoot={__PROJECT_ROOT__} />
         <Scripts />
       </body>
     </html>

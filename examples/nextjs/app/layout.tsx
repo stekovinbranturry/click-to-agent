@@ -16,7 +16,6 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
-        {/* Default editors: Cursor + VS Code. Pass editor={['zed']} etc. to customize. */}
         <Locator />
       </body>
     </html>

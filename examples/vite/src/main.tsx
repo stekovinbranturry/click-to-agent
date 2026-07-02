@@ -9,7 +9,6 @@ declare const __PROJECT_ROOT__: string;
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
-    {/* projectRoot lets "Go to source" resolve absolute paths on Vite. */}
-    <Locator enabled={import.meta.env.DEV} projectRoot={__PROJECT_ROOT__} />
+    <Locator projectRoot={__PROJECT_ROOT__} />
   </StrictMode>,
 );

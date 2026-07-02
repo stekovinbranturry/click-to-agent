@@ -42,7 +42,7 @@ React 组件定位器 — Alt/Option+点击跳转源码，或将完整上下文�
 - **零成本上手** — 指着 UI 就能定位，不用在组件树里翻找
 - **Agent 就绪** — Cursor / Claude 一次拿到 props、state、DOM、CSS
 - **适配你的技术栈** — Next.js 零配置；Vite / TanStack Start / Rsbuild 只需传 `projectRoot`
-- **不影响生产构建** — 生产包会被摇树优化掉
+- **不影响生产构建** — 默认仅在 `NODE_ENV === 'development'` 时包含在 bundle 中
 
 ---
 
@@ -69,6 +69,13 @@ npm install -D click-to-agent
 yarn add -D click-to-agent
 ```
 
+尽量把 `<Locator />` 挂在 React 树的高层。接入方式与 [`@tanstack/react-query-devtools`](https://tanstack.com/query/latest/docs/framework/react/devtools) 相同：**无需包装组件、无需 `enabled` prop** — 包入口在 `NODE_ENV !== 'development'` 时导出 no-op。
+
+| 框架 | `projectRoot` |
+|------|---------------|
+| **Next.js** | 可选（自动解析） |
+| **Vite / Rsbuild / TanStack Start** | 必填 — `define: { __PROJECT_ROOT__: JSON.stringify(process.cwd()) }` |
+
 ### <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/nextjs.svg" width="22" height="22" valign="middle" alt="Next.js" /> Next.js
 
 ```tsx
@@ -87,12 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-也可用环境变量代替 `projectRoot` prop：
-
-```bash
-# .env.local
-NEXT_PUBLIC_PROJECT_ROOT=/absolute/path/to/your/app
-```
+可选：在 `.env.local` 中设置 `NEXT_PUBLIC_PROJECT_ROOT` 代替 `projectRoot` prop。
 
 ### <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/vite.svg" width="22" height="22" valign="middle" alt="Vite" /> Vite
 
@@ -100,7 +102,6 @@ NEXT_PUBLIC_PROJECT_ROOT=/absolute/path/to/your/app
 // vite.config.ts
 export default defineConfig({
   define: { __PROJECT_ROOT__: JSON.stringify(process.cwd()) },
-  // ...
 });
 ```
 
@@ -113,35 +114,9 @@ declare const __PROJECT_ROOT__: string;
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
-    <Locator enabled={import.meta.env.DEV} projectRoot={__PROJECT_ROOT__} />
+    <Locator projectRoot={__PROJECT_ROOT__} />
   </StrictMode>,
 );
-```
-
-### <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/tanstack.png" width="22" height="22" valign="middle" alt="TanStack" /> TanStack Start
-
-TanStack Start 使用 SSR，需将 `<Locator>` 包在 `'use client'` 组件中：
-
-```ts
-// vite.config.ts
-define: { __PROJECT_ROOT__: JSON.stringify(process.cwd()) },
-```
-
-```tsx
-// src/components/LocatorDev.tsx
-'use client';
-import { Locator } from 'click-to-agent';
-declare const __PROJECT_ROOT__: string;
-
-export function LocatorDev() {
-  if (!import.meta.env.DEV) return null;
-  return <Locator projectRoot={__PROJECT_ROOT__} />;
-}
-```
-
-```tsx
-// src/routes/__root.tsx — 放在 <body> 内
-<LocatorDev />
 ```
 
 ### <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/rsbuild.svg" width="22" height="22" valign="middle" alt="Rsbuild" /> Rsbuild / Rspack
@@ -152,23 +127,37 @@ export default defineConfig({
   source: {
     define: { __PROJECT_ROOT__: JSON.stringify(process.cwd()) },
   },
-  // ...
 });
 ```
 
 ```tsx
 // src/index.tsx
 import { Locator } from 'click-to-agent';
+
 declare const __PROJECT_ROOT__: string;
 
 root.render(
   <StrictMode>
     <App />
-    {import.meta.env.DEV && (
-      <Locator projectRoot={__PROJECT_ROOT__} />
-    )}
+    <Locator projectRoot={__PROJECT_ROOT__} />
   </StrictMode>,
 );
+```
+
+### <img src="https://raw.githubusercontent.com/stekovinbranturry/click-to-agent/main/docs/logos/tanstack.png" width="22" height="22" valign="middle" alt="TanStack" /> TanStack Start
+
+```ts
+// vite.config.ts
+define: { __PROJECT_ROOT__: JSON.stringify(process.cwd()) },
+```
+
+```tsx
+// src/routes/__root.tsx — 放在 <body> 内
+import { Locator } from 'click-to-agent';
+
+declare const __PROJECT_ROOT__: string;
+
+<Locator projectRoot={__PROJECT_ROOT__} />
 ```
 
 ---
@@ -180,18 +169,15 @@ root.render(
 | `editor` | `EditorProtocol[]` | `['cursor', 'vscode']` | **Go to source** 目标编辑器，每个条目对应一个菜单项 |
 | `projectRoot` | `string` | — | 项目根目录绝对路径，用于 Source Map 路径解析。会覆盖 `NEXT_PUBLIC_PROJECT_ROOT`。Vite / TanStack Start / Rsbuild 通常需要（除非路径本身已是绝对路径） |
 | `modifier` | `'alt'` \| `'ctrl'` \| `'meta'` \| `'shift'` | `'alt'` | 触发修饰键：<kbd>⎇</kbd> Alt / <kbd>⌥</kbd> Option · <kbd>⌃</kbd> Ctrl · <kbd>⌘</kbd> Cmd · <kbd>⇧</kbd> Shift |
-| `enabled` | `boolean` | `true` | 强制启用或禁用 |
 | `highlightColor` | `string` | `'#ef4444'` | 高亮边框颜色（任意 CSS 颜色值） |
 | `showPreview` | `boolean` | `true` | <kbd>⌥</kbd>/<kbd>⎇</kbd> + 悬停时是否显示 props / Hook 状态预览面板 |
 
 ```tsx
-// 常见配置
-<Locator />                                              // 默认：Cursor + VS Code
-<Locator editor={['cursor']} />                            // 仅 Cursor
-<Locator editor={['cursor', 'vscode', 'zed']} />           // 团队混用编辑器
-<Locator projectRoot={__PROJECT_ROOT__} />                 // Vite / Rsbuild
-<Locator modifier="meta" highlightColor="#3b82f6" />      // ⌘+点击，蓝色高亮
-<Locator showPreview={false} />                            // 关闭 props 预览
+<Locator />
+<Locator projectRoot={__PROJECT_ROOT__} />
+<Locator editor={['cursor']} />
+<Locator modifier="meta" highlightColor="#3b82f6" />
+<Locator showPreview={false} />
 ```
 
 > **Ask Cursor** / **Ask Claude** 使用各自的 Deeplink，与 `editor` prop 无关。

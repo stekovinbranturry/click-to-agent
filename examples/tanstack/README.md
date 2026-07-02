@@ -22,8 +22,8 @@ hierarchy.
 
 ## Wiring
 
-`LocatorDev` is a client boundary in `src/components/LocatorDev.tsx`, mounted
-from `src/routes/__root.tsx`. `projectRoot` is injected via Vite `define`:
+`<Locator />` 挂在 `src/routes/__root.tsx` 的 `<body>` 内，与 TanStack Devtools 并列。
+`projectRoot` 通过 Vite `define` 注入：
 
 ```ts
 // vite.config.ts

@@ -49,7 +49,7 @@ export default defineConfig({
 
 ```tsx
 // src/main.tsx
-<Locator enabled={import.meta.env.DEV} projectRoot={__PROJECT_ROOT__} />
+<Locator projectRoot={__PROJECT_ROOT__} />
 ```
 
 Files served via Vite's `/@fs/<abs>` (outside the root) resolve to absolute

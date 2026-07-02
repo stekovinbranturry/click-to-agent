@@ -11,9 +11,7 @@ if (rootEl) {
   root.render(
     <React.StrictMode>
       <App />
-      {import.meta.env.DEV && (
-        <Locator projectRoot={__PROJECT_ROOT__} />
-      )}
+      <Locator projectRoot={__PROJECT_ROOT__} />
     </React.StrictMode>,
   );
 }
