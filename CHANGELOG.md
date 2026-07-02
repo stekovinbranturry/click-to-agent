@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- Export a dev-only Locator no-op at the package entry (like `@tanstack/react-query-devtools`), so apps mount `<Locator />` directly without wrappers, `enabled`, or dynamic import.
+
+  **Breaking:** removed the `enabled` prop.
+
 ## 0.2.0
 
 ### Minor Changes
