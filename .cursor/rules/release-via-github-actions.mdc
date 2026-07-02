@@ -1,0 +1,34 @@
+---
+description: npm 发布走 GitHub Actions，禁止本地 publish
+alwaysApply: true
+---
+
+# Release via GitHub Actions
+
+## 发版流程
+
+1. 改动可发布包时，添加 changeset 并随功能一起 commit：
+   ```sh
+   pnpm changeset
+   ```
+2. Push / merge 到 `main`。
+3. [Release workflow](.github/workflows/release.yml) 自动开 **Version Packages** PR（bump 版本 + 更新 CHANGELOG）。
+4. Merge 该 PR → CI 执行 `pnpm release` 发布到 npm（含 provenance）。
+
+## Agent 禁止事项
+
+- **不要**运行 `pnpm release`、`npm publish`、`changeset publish`（本地无权限且 provenance 会失败）。
+- **不要**在功能 commit 里本地跑 `pnpm version-packages`，除非用户明确要求「本地 bump 版本」。
+- **不要**为了发版而 amend 已 push 的 release commit。
+
+## 用户说「发版 / release / publish」时
+
+1. 确认已有 changeset；没有则先 `pnpm changeset` 并 commit。
+2. Push 到 `main`，告知用户等待 **Version Packages** PR 并 merge。
+3. 若版本已在 main bump 过，告知用户 Release workflow 会在 push 后直接 publish（无需本地操作）。
+
+## 版本类型
+
+- 新功能 → changeset 选 **minor**
+- Bug 修复 → **patch**
+- 破坏性变更 → **major**
